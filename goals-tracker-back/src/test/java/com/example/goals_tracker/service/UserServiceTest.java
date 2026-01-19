@@ -1,11 +1,10 @@
-package com.example.goals_tracker;
+package com.example.goals_tracker.service;
 
 import com.example.goals_tracker.dto.CreateUserRequest;
 import com.example.goals_tracker.dto.UserResponse;
 import com.example.goals_tracker.exception.EmailAlreadyExistsException;
 import com.example.goals_tracker.model.User;
 import com.example.goals_tracker.repository.UserRepository;
-import com.example.goals_tracker.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
