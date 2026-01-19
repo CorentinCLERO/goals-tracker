@@ -1,9 +1,15 @@
 package com.example.goals_tracker.dto;
 
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class CreateUserRequest {
     
     @NotBlank(message = "Email is required")
