@@ -1,6 +1,8 @@
 package com.example.goals_tracker.controller;
 
 import com.example.goals_tracker.dto.CreateUserRequest;
+import com.example.goals_tracker.dto.LoginRequest;
+import com.example.goals_tracker.dto.LoginResponse;
 import com.example.goals_tracker.dto.UserResponse;
 import com.example.goals_tracker.service.UserService;
 import jakarta.validation.Valid;
@@ -24,5 +26,12 @@ public class UserController {
         UserResponse userResponse = userService.createUser(request);
         log.info("User created successfully with ID: {}", userResponse.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
+    }
+    
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        log.info("Login attempt for email: {}", request.getEmail());
+        LoginResponse response = userService.login(request);
+        return ResponseEntity.ok(response);
     }
 }
