@@ -25,5 +25,15 @@ services:
       - "8000:8000"
     depends_on:
       - db
+
+  goals-tracker-front:
+    build:
+      context: ./goals-tracker-front
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - goals-tracker-backend
+
 volumes:
   pgdata:
