@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
-  const register = (email: string, password: string, name: string): boolean => {
+  const register = (email: string, _password: string, name: string): boolean => {
     // Check if user already exists
     if (findUserByEmail(email)) {
       return false;
