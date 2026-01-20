@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/auth-context';
-import type { Goal, Habit, Step, Stats, HabitCompletion } from '../types';
+import type { Goal, Habit, Stats } from '../types';
 import { getGoals, getHabits, getSteps, getHabitCompletions } from '../lib/storage';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -19,11 +19,6 @@ export function Dashboard() {
     activeGoals: 0,
     activeHabits: 0,
   });
-
-  useEffect(() => {
-    if (!user) return;
-    loadData();
-  }, [user]);
 
   const loadData = () => {
     if (!user) return;
@@ -60,6 +55,12 @@ export function Dashboard() {
       activeHabits: userHabits.length,
     });
   };
+
+  useEffect(() => {
+    if (!user) return;
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const getGoalProgress = (goal: Goal): number => {
     const steps = getSteps(goal.id);

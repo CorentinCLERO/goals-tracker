@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Goal, Step, StepStatus } from '../types';
+import type { Goal, Step } from '../types';
 import { getSteps, saveStep, deleteStep } from '../lib/storage';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
@@ -9,7 +9,7 @@ import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Checkbox } from '../components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Plus, Trash2, Edit, Calendar, Flag } from 'lucide-react';
+import { Plus, Trash2, Edit, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface GoalDetailProps {
