@@ -1,7 +1,7 @@
-export type Priority = 'low' | 'medium' | 'high';
-export type GoalStatus = 'in_progress' | 'completed' | 'abandoned';
-export type StepStatus = 'todo' | 'completed';
-export type Frequency = 'daily' | 'weekly';
+export type Priority = "low" | "medium" | "high";
+export type GoalStatus = "in_progress" | "completed" | "abandoned";
+export type StepStatus = "todo" | "completed";
+export type Frequency = "daily" | "weekly";
 
 export interface User {
   id: string;
