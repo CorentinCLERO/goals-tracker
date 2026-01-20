@@ -46,4 +46,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Internal server error", "message", ex.getMessage()));
     }
+
+    @ExceptionHandler(BeanNotFoundException.class)
+    public ResponseEntity<Object> handleBeanNotFound(BeanNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Resource not found", "message", ex.getMessage()));
+
+    }
 }
