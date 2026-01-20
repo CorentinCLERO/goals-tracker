@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/auth-context';
 import type { Goal, Habit, Stats } from '../types';
 import { getGoals, getHabits, getSteps, getHabitCompletions } from '../lib/storage';
