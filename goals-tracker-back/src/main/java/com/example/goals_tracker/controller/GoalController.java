@@ -82,6 +82,17 @@ public class GoalController {
         return ResponseEntity.ok(updatedGoal);
     }
 
+    @PutMapping("/{id}/completed")
+    public ResponseEntity<GoalResponse> markGoalAsCompleted(@PathVariable("id") UUID id) {
+        log.info("Marking goal as completed with ID: {}", id);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+
+        GoalResponse completedGoal = goalService.markGoalAsCompleted(id, userId);
+        log.info("Goal marked as completed successfully with ID: {}", completedGoal.getId());
+        return ResponseEntity.ok(completedGoal);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteGoal(@PathVariable("id") UUID id) {
         log.info("Deleting goal with ID: {}", id);

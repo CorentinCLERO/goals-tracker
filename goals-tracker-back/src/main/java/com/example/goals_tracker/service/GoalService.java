@@ -84,6 +84,17 @@ public class GoalService {
             existingGoal.setDeadline(LocalDateTime.parse(request.getDeadline()));
     }
 
+    public GoalResponse markGoalAsCompleted(UUID goalId, UUID userId) {
+        Goal existingGoal = goalRepository.findByIdAndUserId(goalId, userId)
+                .orElseThrow(() -> new BeanNotFoundException("Goal not found"));
+        
+        existingGoal.setStatus(StatusEnum.COMPLETED);
+        existingGoal.setCompletedAt(LocalDateTime.now());
+        
+        Goal updatedGoal = goalRepository.save(existingGoal);
+        return GoalResponse.from(updatedGoal);
+    }
+
     public void deleteGoal(UUID goalId, UUID userId) {
         Goal existingGoal = goalRepository.findByIdAndUserId(goalId, userId)
                 .orElseThrow(() -> new BeanNotFoundException("Goal not found"));
