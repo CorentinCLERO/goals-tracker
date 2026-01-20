@@ -19,6 +19,12 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Email already exists", "message", ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidEnumException.class)
+    public ResponseEntity<Object> handleInvalidEnum(InvalidEnumException ex) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", "Invalid parameter value", "message", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
