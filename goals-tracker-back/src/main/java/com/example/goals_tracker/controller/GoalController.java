@@ -1,0 +1,37 @@
+package com.example.goals_tracker.controller;
+
+import com.example.goals_tracker.dto.GoalRequest;
+import com.example.goals_tracker.dto.GoalResponse;
+import com.example.goals_tracker.service.GoalService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/goals")
+@RequiredArgsConstructor
+@Slf4j
+public class GoalController {
+
+    private final GoalService goalService;
+
+    @PostMapping
+    public ResponseEntity<GoalResponse> createUserGoals(@Valid @RequestBody GoalRequest goalRequest) {
+        log.info("Creating a new goal with title: {}", goalRequest.getTitle());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+
+        GoalResponse createdGoal = goalService.createGoal(goalRequest, userId);
+        log.info("Goal created successfully with ID: {}", createdGoal.getId());
+        return ResponseEntity.status(201).body(createdGoal);
+    }
+}
