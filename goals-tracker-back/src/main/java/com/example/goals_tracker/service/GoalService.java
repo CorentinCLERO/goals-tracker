@@ -63,4 +63,24 @@ public class GoalService {
                 .orElseThrow(() -> new BeanNotFoundException("Goal not found"));
         return GoalResponse.from(goal);
     }
+
+    public GoalResponse updateGoal(UUID goalId, GoalRequest goalRequest, UUID userId) {
+        Goal existingGoal = goalRepository.findByIdAndUserId(goalId, userId)
+                .orElseThrow(() -> new BeanNotFoundException("Goal not found"));
+        mapFields(goalRequest, existingGoal);
+        Goal updatedGoal = goalRepository.save(existingGoal);
+        return GoalResponse.from(updatedGoal);
+    }
+
+    private void mapFields(GoalRequest request, Goal existingGoal) {
+            existingGoal.setTitle(request.getTitle());
+            existingGoal.setDescription(request.getDescription());
+            existingGoal.setCategory(request.getCategory());
+            PriorityEnum priorityEnum = parsePriority(request.getPriority());
+            StatusEnum statusEnum = parseStatus(request.getStatus());
+            existingGoal.setPriority(priorityEnum);
+            existingGoal.setStatus(statusEnum);
+            existingGoal.setStartDate(LocalDateTime.parse(request.getStartDate()));
+            existingGoal.setDeadline(LocalDateTime.parse(request.getDeadline()));
+    }
 }

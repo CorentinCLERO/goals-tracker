@@ -5,7 +5,6 @@ import com.example.goals_tracker.dto.GoalResponse;
 import com.example.goals_tracker.dto.GoalsQueryParams;
 import com.example.goals_tracker.service.GoalService;
 import jakarta.validation.Valid;
-import jakarta.websocket.server.PathParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -67,5 +67,17 @@ public class GoalController {
         GoalResponse goal = goalService.getGoalById(id, userId);
         log.info("Goal fetched successfully with ID: {}", goal.getId());
         return ResponseEntity.ok(goal);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<GoalResponse> updateGoal(@PathVariable("id") UUID id, 
+                                                   @Valid @RequestBody GoalRequest goalRequest) {
+        log.info("Updating goal with ID: {}", id);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+
+        GoalResponse updatedGoal = goalService.updateGoal(id, goalRequest, userId);
+        log.info("Goal updated successfully with ID: {}", updatedGoal.getId());
+        return ResponseEntity.ok(updatedGoal);
     }
 }
