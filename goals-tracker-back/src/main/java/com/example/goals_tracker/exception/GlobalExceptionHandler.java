@@ -35,4 +35,10 @@ public class GlobalExceptionHandler {
         });
         return ResponseEntity.badRequest().body(Map.of("error", "Validation failed", "details", errors));
     }
+
+    @ExceptionHandler(BeanNotFoundException.class)
+    public ResponseEntity<Object> handleBeanNotFound(BeanNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Resource not found", "message", ex.getMessage()));
+    }
 }

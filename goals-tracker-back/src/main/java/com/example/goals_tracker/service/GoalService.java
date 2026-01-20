@@ -3,6 +3,7 @@ package com.example.goals_tracker.service;
 import com.example.goals_tracker.dto.GoalRequest;
 import com.example.goals_tracker.dto.GoalResponse;
 import com.example.goals_tracker.dto.GoalsQueryParams;
+import com.example.goals_tracker.exception.BeanNotFoundException;
 import com.example.goals_tracker.model.Goal;
 import com.example.goals_tracker.model.PriorityEnum;
 import com.example.goals_tracker.model.StatusEnum;
@@ -30,7 +31,7 @@ public class GoalService {
         StatusEnum statusEnum = parseStatus(goalRequest.getStatus());
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BeanNotFoundException("User not found"));
 
         Goal goal = Goal.builder()
                 .title(goalRequest.getTitle())
@@ -55,5 +56,11 @@ public class GoalService {
         return goals.stream()
                 .map(GoalResponse::from)
                 .toList();
+    }
+
+    public GoalResponse getGoalById(UUID goalId, UUID userId) {
+        Goal goal = goalRepository.findByIdAndUserId(goalId, userId)
+                .orElseThrow(() -> new BeanNotFoundException("Goal not found"));
+        return GoalResponse.from(goal);
     }
 }
