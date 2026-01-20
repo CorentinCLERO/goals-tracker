@@ -27,15 +27,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       await apiClient.login({ email, password });
       const userData = await apiClient.getCurrentUser();
       setUser(userData);
-      return true;
-    } catch (error) {
+      return { success: true };
+    } catch (error: any) {
       console.error("Login failed:", error);
-      return false;
+      return { success: false, error: error.message };
     }
   };
 
@@ -43,17 +46,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     name: string,
-  ): Promise<boolean> => {
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       await apiClient.register({ email, password, name });
       // After registration, automatically log in
       await apiClient.login({ email, password });
       const userData = await apiClient.getCurrentUser();
       setUser(userData);
-      return true;
-    } catch (error) {
+      return { success: true };
+    } catch (error: any) {
       console.error("Registration failed:", error);
-      return false;
+      return { success: false, error: error.message };
     }
   };
 

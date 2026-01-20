@@ -29,39 +29,29 @@ export function Auth() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const success = await login(loginEmail, loginPassword);
-      if (success) {
-        toast.success("Welcome back!");
-      } else {
-        toast.error(
-          "Invalid credentials. Please check your email and password.",
-        );
-      }
-    } catch (error) {
-      toast.error("Login failed. Please try again.");
+    const result = await login(loginEmail, loginPassword);
+    if (result.success) {
+      toast.success("Bienvenue !");
+    } else {
+      toast.error(result.error || "Erreur lors de la connexion.");
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!registerName || !registerEmail || !registerPassword) {
-      toast.error("Please fill in all fields");
+      toast.error("Veuillez remplir tous les champs");
       return;
     }
-    try {
-      const success = await register(
-        registerEmail,
-        registerPassword,
-        registerName,
-      );
-      if (success) {
-        toast.success("Account created successfully!");
-      } else {
-        toast.error("Registration failed. User might already exist.");
-      }
-    } catch (error) {
-      toast.error("Registration failed. Please try again.");
+    const result = await register(
+      registerEmail,
+      registerPassword,
+      registerName,
+    );
+    if (result.success) {
+      toast.success("Compte créé avec succès !");
+    } else {
+      toast.error(result.error || "Erreur lors de l'inscription.");
     }
   };
 
