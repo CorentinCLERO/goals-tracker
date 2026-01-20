@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -79,5 +80,16 @@ public class GoalController {
         GoalResponse updatedGoal = goalService.updateGoal(id, goalRequest, userId);
         log.info("Goal updated successfully with ID: {}", updatedGoal.getId());
         return ResponseEntity.ok(updatedGoal);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteGoal(@PathVariable("id") UUID id) {
+        log.info("Deleting goal with ID: {}", id);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+
+        goalService.deleteGoal(id, userId);
+        log.info("Goal deleted successfully with ID: {}", id);
+        return ResponseEntity.noContent().build();
     }
 }
