@@ -31,6 +31,12 @@ interface ApiError {
   details?: Record<string, string>;
 }
 
+interface ExtendedError extends Error {
+  status: number;
+  details?: Record<string, string>;
+  type?: string;
+}
+
 class ApiClient {
   private token: string | null = null;
 
@@ -72,7 +78,7 @@ class ApiClient {
         };
       }
 
-      const error = new Error(errorData.message || errorData.error) as any;
+      const error = new Error(errorData.message || errorData.error) as ExtendedError;
       error.status = response.status;
       error.details = errorData.details;
       error.type = errorData.error;
@@ -101,14 +107,18 @@ class ApiClient {
       });
       this.setToken(response.token);
       return response;
-    } catch (error: any) {
-      if (error.status === 400 && error.type === "Validation failed") {
+    } catch (error) {
+      const apiError = error as ExtendedError;
+      if (apiError.status === 400 && apiError.type === "Validation failed") {
         throw new Error("Veuillez vérifier vos informations de connexion.");
       }
-      if (error.status === 500) {
+      if (apiError.status === 401 && apiError.type === "Invalid credentials") {
         throw new Error("Email ou mot de passe incorrect.");
       }
-      throw new Error(error.message || "Erreur lors de la connexion.");
+      if (apiError.status === 500) {
+        throw new Error("Email ou mot de passe incorrect.");
+      }
+      throw new Error(apiError.message || "Erreur lors de la connexion.");
     }
   }
 
@@ -119,19 +129,20 @@ class ApiClient {
         body: JSON.stringify(userData),
       });
       return response;
-    } catch (error: any) {
-      if (error.status === 409 && error.type === "Email already exists") {
+    } catch (error) {
+      const apiError = error as ExtendedError;
+      if (apiError.status === 409 && apiError.type === "Email already exists") {
         throw new Error("Cet email est déjà utilisé.");
       }
-      if (error.status === 400 && error.type === "Validation failed") {
+      if (apiError.status === 400 && apiError.type === "Validation failed") {
         // Handle validation errors
-        if (error.details) {
-          const validationErrors = Object.values(error.details);
+        if (apiError.details) {
+          const validationErrors = Object.values(apiError.details);
           throw new Error(validationErrors.join(", "));
         }
         throw new Error("Veuillez vérifier vos informations.");
       }
-      throw new Error(error.message || "Erreur lors de l'inscription.");
+      throw new Error(apiError.message || "Erreur lors de l'inscription.");
     }
   }
 
