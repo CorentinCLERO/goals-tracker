@@ -13,10 +13,16 @@ import lombok.NoArgsConstructor;
 public class GoalRequest {
     @NotBlank
     private String title;
+    @NotBlank
     private String description;
+    @NotBlank
     private String category;
+    @NotBlank
     private String priority;
+    @NotBlank
     private String status;
+    @NotBlank
     private String startDate;
+    @NotBlank
     private String deadline;
 }

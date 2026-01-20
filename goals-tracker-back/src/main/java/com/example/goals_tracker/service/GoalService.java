@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static com.example.goals_tracker.dto.GoalsQueryParams.parsePriority;
+import static com.example.goals_tracker.dto.GoalsQueryParams.parseStatus;
+
 @Service
 @RequiredArgsConstructor
 public class GoalService {
@@ -23,8 +26,8 @@ public class GoalService {
     private final UserRepository userRepository;
 
     public GoalResponse createGoal(GoalRequest goalRequest, UUID userId) {
-        PriorityEnum priorityEnum = PriorityEnum.valueOf(goalRequest.getPriority().toUpperCase());
-        StatusEnum statusEnum = StatusEnum.valueOf(goalRequest.getStatus().toUpperCase());
+        PriorityEnum priorityEnum = parsePriority(goalRequest.getPriority());
+        StatusEnum statusEnum = parseStatus(goalRequest.getStatus());
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

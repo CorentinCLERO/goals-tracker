@@ -1,5 +1,6 @@
 package com.example.goals_tracker.dto;
 
+import com.example.goals_tracker.exception.InvalidEnumException;
 import com.example.goals_tracker.model.PriorityEnum;
 import com.example.goals_tracker.model.StatusEnum;
 import lombok.Builder;
@@ -23,36 +24,36 @@ public class GoalsQueryParams {
                 .build();
     }
 
-    private static StatusEnum parseStatus(String status) {
+    public static StatusEnum parseStatus(String status) {
         if (status == null || status.trim().isEmpty()) {
             return null;
         }
         try {
             return StatusEnum.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid status: " + status);
+            throw new InvalidEnumException("status", status);
         }
     }
 
-    private static PriorityEnum parsePriority(String priority) {
+    public static PriorityEnum parsePriority(String priority) {
         if (priority == null || priority.trim().isEmpty()) {
             return null;
         }
         try {
             return PriorityEnum.valueOf(priority.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid priority: " + priority);
+            throw new InvalidEnumException("priority", priority);
         }
     }
 
-    private static String validateSortBy(String sortBy) {
+    public static String validateSortBy(String sortBy) {
         if (sortBy == null || !java.util.List.of("deadline", "createdAt", "priority").contains(sortBy)) {
             return "deadline";
         }
         return sortBy;
     }
 
-    private static String validateSortDirection(String sortDirection) {
+    public static String validateSortDirection(String sortDirection) {
         if (sortDirection == null || !java.util.List.of("asc", "desc").contains(sortDirection.toLowerCase())) {
             return "asc";
         }
