@@ -36,9 +36,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = await apiClient.getCurrentUser();
       setUser(userData);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Login failed:", error);
-      return { success: false, error: error.message };
+      const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -54,9 +55,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = await apiClient.getCurrentUser();
       setUser(userData);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Registration failed:", error);
-      return { success: false, error: error.message };
+      const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
+      return { success: false, error: errorMessage };
     }
   };
 
