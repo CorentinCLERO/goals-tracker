@@ -15,7 +15,6 @@ import { cn } from "./utils";
 import { Label } from "./label";
 import {
   FormFieldContext,
-  FormItemContext,
   useFormField,
 } from "./form-context";
 

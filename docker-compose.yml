@@ -22,7 +22,7 @@ services:
       DATABASE_PASSWORD: password
       DATABASE_NAME: goals_tracker_db
     ports:
-      - "8000:8000"
+      - "8080:8080"
     depends_on:
       - db
 
