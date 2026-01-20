@@ -78,7 +78,9 @@ class ApiClient {
         };
       }
 
-      const error = new Error(errorData.message || errorData.error) as ExtendedError;
+      const error = new Error(
+        errorData.message || errorData.error,
+      ) as ExtendedError;
       error.status = response.status;
       error.details = errorData.details;
       error.type = errorData.error;
