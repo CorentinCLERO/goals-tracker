@@ -2,6 +2,7 @@ package com.example.goals_tracker.service;
 
 import com.example.goals_tracker.dto.GoalRequest;
 import com.example.goals_tracker.dto.GoalResponse;
+import com.example.goals_tracker.dto.GoalsQueryParams;
 import com.example.goals_tracker.model.Goal;
 import com.example.goals_tracker.model.PriorityEnum;
 import com.example.goals_tracker.model.StatusEnum;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -41,5 +43,14 @@ public class GoalService {
         Goal newGoal = goalRepository.save(goal);
 
         return GoalResponse.from(newGoal);
+    }
+
+    public List<GoalResponse> listUserGoals(UUID userId, GoalsQueryParams queryParams) {
+        List<Goal> goals = goalRepository.findByUserIdWithFiltersAndSorting(
+                userId, queryParams.getStatus(), queryParams.getPriority(), 
+                queryParams.getSortBy(), queryParams.getSortDirection());
+        return goals.stream()
+                .map(GoalResponse::from)
+                .toList();
     }
 }
