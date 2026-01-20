@@ -1,35 +1,53 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import { useAuth } from "./contexts/auth-context";
+import { AuthProvider } from "./contexts/AuthContext";
+import { Auth } from "./pages/Auth";
+import { Layout } from "./components/Layout";
+import { Toaster } from "./components/ui/sonner";
 
-function App() {
-  const [count, setCount] = useState(0)
+function AppContent() {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("dashboard");
+
+  if (!user) {
+    return <Auth />;
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+      {activeTab === "dashboard" && (
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+          <p>Welcome to your dashboard, {user.name}!</p>
+        </div>
+      )}
+      {activeTab === "goals" && (
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-4">Goals</h1>
+          <p>Manage your goals here.</p>
+        </div>
+      )}
+      {activeTab === "habits" && (
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-4">Habits</h1>
+          <p>Track your habits here.</p>
+        </div>
+      )}
+      {activeTab === "profile" && (
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-4">Profile</h1>
+          <p>Manage your profile here.</p>
+        </div>
+      )}
+    </Layout>
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+      <Toaster />
+    </AuthProvider>
+  );
+}
