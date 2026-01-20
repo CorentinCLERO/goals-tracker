@@ -7,7 +7,10 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  level?: number;
+  xpPoints?: number;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Goal {
