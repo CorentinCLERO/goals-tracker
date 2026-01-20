@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Calendar, Flag, Eye } from 'lucide-react';
+import { Plus, Calendar, Eye } from 'lucide-react';
 import { GoalDialog } from './GoalDialog';
 import { GoalDetail } from './GoalDetail';
 import { toast } from 'sonner';
