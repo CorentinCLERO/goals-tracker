@@ -1,54 +1,70 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { User } from "../types";
-import {
-  getCurrentUser,
-  setCurrentUser,
-  saveUser,
-  findUserByEmail,
-} from "../lib/storage";
+import { apiClient } from "../lib/api";
 import { AuthContext } from "./auth-context";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => getCurrentUser());
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (email: string, password: string): boolean => {
-    // In a real app, this would validate password against a backend
-    // For demo purposes, we just check if user exists
-    console.log("Login attempt:", email, password); // Mark password as used
-    const foundUser = findUserByEmail(email);
-    if (foundUser) {
-      setUser(foundUser);
-      setCurrentUser(foundUser);
-      return true;
-    }
-    return false;
-  };
-
-  const register = (email: string, _password: string, name: string): boolean => {
-    // Check if user already exists
-    if (findUserByEmail(email)) {
-      return false;
-    }
-
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      email,
-      name,
-      createdAt: new Date().toISOString(),
+  useEffect(() => {
+    // Check if user is logged in on app start
+    const checkAuth = async () => {
+      const token = localStorage.getItem("auth_token");
+      if (token) {
+        try {
+          const userData = await apiClient.getCurrentUser();
+          setUser(userData);
+        } catch (error) {
+          console.error("Failed to get current user:", error);
+          // Token might be invalid, clear it
+          apiClient.logout();
+        }
+      }
+      setLoading(false);
     };
 
-    saveUser(newUser);
-    setUser(newUser);
-    setCurrentUser(newUser);
-    return true;
+    checkAuth();
+  }, []);
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      await apiClient.login({ email, password });
+      const userData = await apiClient.getCurrentUser();
+      setUser(userData);
+      return true;
+    } catch (error) {
+      console.error("Login failed:", error);
+      return false;
+    }
+  };
+
+  const register = async (
+    email: string,
+    password: string,
+    name: string,
+  ): Promise<boolean> => {
+    try {
+      await apiClient.register({ email, password, name });
+      // After registration, automatically log in
+      await apiClient.login({ email, password });
+      const userData = await apiClient.getCurrentUser();
+      setUser(userData);
+      return true;
+    } catch (error) {
+      console.error("Registration failed:", error);
+      return false;
+    }
   };
 
   const logout = () => {
     setUser(null);
-    setCurrentUser(null);
+    apiClient.logout();
   };
 
-  const updateProfile = (name: string, email: string) => {
+  const updateProfile = async (name: string, email: string) => {
+    // Note: This would need a backend endpoint to update user profile
+    // For now, we'll just update local state
     if (!user) return;
 
     const updatedUser: User = {
@@ -57,10 +73,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
     };
 
-    saveUser(updatedUser);
     setUser(updatedUser);
-    setCurrentUser(updatedUser);
   };
+
+  if (loading) {
+    return <div>Loading...</div>; // You might want to create a proper loading component
+  }
 
   return (
     <AuthContext.Provider

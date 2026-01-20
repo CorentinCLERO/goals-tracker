@@ -1,42 +1,67 @@
-import React, { useState } from 'react';
-import { useAuth } from '../contexts/auth-context';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Target } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useAuth } from "../contexts/auth-context";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
+import { Target } from "lucide-react";
+import { toast } from "sonner";
 
 export function Auth() {
   const { login, register } = useAuth();
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [registerEmail, setRegisterEmail] = useState('');
-  const [registerPassword, setRegisterPassword] = useState('');
-  const [registerName, setRegisterName] = useState('');
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerName, setRegisterName] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = login(loginEmail, loginPassword);
-    if (success) {
-      toast.success('Welcome back!');
-    } else {
-      toast.error('Invalid credentials. Please register first.');
+    try {
+      const success = await login(loginEmail, loginPassword);
+      if (success) {
+        toast.success("Welcome back!");
+      } else {
+        toast.error(
+          "Invalid credentials. Please check your email and password.",
+        );
+      }
+    } catch (error) {
+      toast.error("Login failed. Please try again.");
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!registerName || !registerEmail || !registerPassword) {
-      toast.error('Please fill in all fields');
+      toast.error("Please fill in all fields");
       return;
     }
-    const success = register(registerEmail, registerPassword, registerName);
-    if (success) {
-      toast.success('Account created successfully!');
-    } else {
-      toast.error('User already exists');
+    try {
+      const success = await register(
+        registerEmail,
+        registerPassword,
+        registerName,
+      );
+      if (success) {
+        toast.success("Account created successfully!");
+      } else {
+        toast.error("Registration failed. User might already exist.");
+      }
+    } catch (error) {
+      toast.error("Registration failed. Please try again.");
     }
   };
 
