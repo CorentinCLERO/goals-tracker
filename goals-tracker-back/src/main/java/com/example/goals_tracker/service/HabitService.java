@@ -1,15 +1,18 @@
 package com.example.goals_tracker.service;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.goals_tracker.dto.HabitRequest;
 import com.example.goals_tracker.dto.HabitResponse;
 import com.example.goals_tracker.model.Habit;
 import com.example.goals_tracker.model.User;
 import com.example.goals_tracker.repository.HabitRepository;
 import com.example.goals_tracker.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -74,5 +77,14 @@ public class HabitService {
         Habit updatedHabit = habitRepository.save(habit);
 
         return mapToResponse(updatedHabit);
+    }
+
+    public List<HabitResponse> getListHabit(UUID userId) {
+        List<Habit> habits = habitRepository.findAllByUserId(userId);
+        System.out.println("Habitudes trouvées pour le user " + userId + " : " + habits.size());
+    
+        return habits.stream()
+            .map(this::mapToResponse) 
+            .toList();
     }
 }
