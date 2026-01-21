@@ -1,6 +1,8 @@
-import { useState, useMemo, useReducer } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Goal, Step } from '../types';
 import { getSteps, saveStep, deleteStep } from '../lib/storage';
+import { addXp, XP_REWARDS } from '../lib/gamification';
+import { useAuth } from '../contexts/auth-context';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -22,19 +24,23 @@ interface GoalDetailProps {
 }
 
 export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdit }: GoalDetailProps) {
+  const { user } = useAuth();
+  const [steps, setSteps] = useState<Step[]>([]);
   const [newStepTitle, setNewStepTitle] = useState('');
   const [newStepDueDate, setNewStepDueDate] = useState('');
-  const [stepsVersion, incrementStepsVersion] = useReducer((x: number) => x + 1, 0);
 
-  // Derive steps from storage - recalculated when goal, open, or version changes
-  const steps = useMemo(() => {
-    if (!open || !goal) return [];
-    return getSteps(goal.id);
-  }, [open, goal, stepsVersion]);
+  const loadSteps = useCallback(() => {
+    if (!goal) return;
+    const goalSteps = getSteps(goal.id);
+    setSteps(goalSteps);
+  }, [goal]);
 
-  const loadSteps = () => {
-    incrementStepsVersion();
-  };
+  useEffect(() => {
+    if (open && goal) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadSteps();
+    }
+  }, [open, goal, loadSteps]);
 
   const handleAddStep = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +68,19 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
       status: step.status === 'completed' ? 'todo' : 'completed',
     };
     saveStep(updatedStep);
+    
+    // Award XP when completing a step
+    if (updatedStep.status === 'completed' && user) {
+      const { leveledUp, newLevel } = addXp(user.id, XP_REWARDS.COMPLETE_STEP);
+      toast.success(`Step completed! +${XP_REWARDS.COMPLETE_STEP} XP`);
+      
+      if (leveledUp) {
+        toast.success(`🎉 Level Up! You're now level ${newLevel}!`, {
+          duration: 5000,
+        });
+      }
+    }
+    
     loadSteps();
     onUpdate();
   };

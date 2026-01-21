@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/auth-context';
-import { Button } from './ui/button';
+import { Button } from '../components/ui/button';
 import { LayoutDashboard, Target, CheckCircle2, User, LogOut, Menu, X, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 

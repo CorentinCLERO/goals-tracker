@@ -1,6 +1,8 @@
-import { useState, useMemo, useReducer } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Habit, HabitCompletion } from '../types';
 import { getHabitCompletions, saveHabitCompletion, deleteHabitCompletion } from '../lib/storage';
+import { addXp, XP_REWARDS } from '../lib/gamification';
+import { useAuth } from '../contexts/auth-context';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -16,18 +18,22 @@ interface HabitTrackerProps {
 }
 
 export function HabitTracker({ open, onOpenChange, habit }: HabitTrackerProps) {
+  const { user } = useAuth();
+  const [completions, setCompletions] = useState<HabitCompletion[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [completionsVersion, incrementCompletionsVersion] = useReducer((x: number) => x + 1, 0);
 
-  // Derive completions from storage - recalculated when habit, open, or version changes
-  const completions = useMemo(() => {
-    if (!open || !habit) return [];
-    return getHabitCompletions(habit.id);
-  }, [open, habit, completionsVersion]);
+  const loadCompletions = useCallback(() => {
+    if (!habit) return;
+    const habitCompletions = getHabitCompletions(habit.id);
+    setCompletions(habitCompletions);
+  }, [habit]);
 
-  const loadCompletions = () => {
-    incrementCompletionsVersion();
-  };
+  useEffect(() => {
+    if (open && habit) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadCompletions();
+    }
+  }, [open, habit, loadCompletions]);
 
   const handleToggleDay = (date: Date) => {
     const dateStr = formatDate(date);
@@ -44,7 +50,18 @@ export function HabitTracker({ open, onOpenChange, habit }: HabitTrackerProps) {
         createdAt: new Date().toISOString(),
       };
       saveHabitCompletion(completion);
-      toast.success('Day completed! 🎉');
+      
+      // Award XP when completing a habit
+      if (user) {
+        const { leveledUp, newLevel } = addXp(user.id, XP_REWARDS.COMPLETE_HABIT);
+        toast.success(`Day completed! +${XP_REWARDS.COMPLETE_HABIT} XP 🎉`);
+        
+        if (leveledUp) {
+          toast.success(`🎉 Level Up! You're now level ${newLevel}!`, {
+            duration: 5000,
+          });
+        }
+      }
     }
     loadCompletions();
   };

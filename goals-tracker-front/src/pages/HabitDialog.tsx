@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import type React from 'react';
+import { useState, useEffect, useCallback, type FormEvent, type ChangeEvent } from 'react';
 import { useAuth } from '../contexts/auth-context';
 import type { Habit, Frequency } from '../types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
@@ -17,29 +16,39 @@ interface HabitDialogProps {
   onSave: (habit: Habit) => void;
 }
 
-const getDefaultStartDate = () => new Date().toISOString().split('T')[0];
-
 export function HabitDialog({ open, onOpenChange, habit, onSave }: HabitDialogProps) {
   const { user } = useAuth();
-  
-  // Initialize form state from habit prop - key prop on form will reset when habit.id changes
-  const [name, setName] = useState(() => habit?.name || '');
-  const [description, setDescription] = useState(() => habit?.description || '');
-  const [frequency, setFrequency] = useState<Frequency>(() => habit?.frequency || 'daily');
-  const [weeklyTarget, setWeeklyTarget] = useState(() => habit?.weeklyTarget || 3);
-  const [category, setCategory] = useState(() => habit?.category || 'Health');
-  const [startDate, setStartDate] = useState(() => habit?.startDate || getDefaultStartDate());
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [frequency, setFrequency] = useState<Frequency>('daily');
+  const [weeklyTarget, setWeeklyTarget] = useState(3);
+  const [category, setCategory] = useState('Health');
+  const [startDate, setStartDate] = useState('');
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setName('');
     setDescription('');
     setFrequency('daily');
     setWeeklyTarget(3);
     setCategory('Health');
-    setStartDate(getDefaultStartDate());
-  };
+    setStartDate(new Date().toISOString().split('T')[0]);
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (habit) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setName(habit.name);
+      setDescription(habit.description || '');
+      setFrequency(habit.frequency);
+      setWeeklyTarget(habit.weeklyTarget || 3);
+      setCategory(habit.category);
+      setStartDate(habit.startDate);
+    } else {
+      resetForm();
+    }
+  }, [habit, open, resetForm]);
+
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
@@ -70,13 +79,13 @@ export function HabitDialog({ open, onOpenChange, habit, onSave }: HabitDialogPr
             {habit ? 'Update your habit details' : 'Define a new habit to build'}
           </DialogDescription>
         </DialogHeader>
-        <form key={habit?.id || 'new'} onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name *</Label>
             <Input
               id="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
               placeholder="e.g., Morning meditation"
               required
             />
@@ -95,7 +104,7 @@ export function HabitDialog({ open, onOpenChange, habit, onSave }: HabitDialogPr
 
           <div className="space-y-3">
             <Label>Frequency *</Label>
-            <RadioGroup value={frequency} onValueChange={(value) => setFrequency(value as Frequency)}>
+            <RadioGroup value={frequency} onValueChange={(value: string) => setFrequency(value as Frequency)}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="daily" id="daily" />
                 <Label htmlFor="daily" className="cursor-pointer">Daily</Label>
@@ -147,7 +156,7 @@ export function HabitDialog({ open, onOpenChange, habit, onSave }: HabitDialogPr
                 id="startDate"
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
                 required
               />
             </div>

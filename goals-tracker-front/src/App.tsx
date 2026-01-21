@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './contexts/auth-context';
+import { Auth } from './pages/Auth';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
-import { Auth } from './pages/Auth';
 import { Goals } from './pages/Goals';
 import { Habits } from './pages/Habits';
+import { Profile } from './pages/Profile';
+import { Gamification } from './pages/Gamification';
+import { Toaster } from './components/ui/sonner';
 
 function AppContent() {
   const { user } = useAuth();
@@ -20,6 +23,8 @@ function AppContent() {
       {activeTab === 'dashboard' && <Dashboard />}
       {activeTab === 'goals' && <Goals />}
       {activeTab === 'habits' && <Habits />}
+      {activeTab === 'gamification' && <Gamification />}
+      {activeTab === 'profile' && <Profile />}
     </Layout>
   );
 }
@@ -28,6 +33,7 @@ export default function App() {
   return (
     <AuthProvider>
       <AppContent />
+      <Toaster />
     </AuthProvider>
   );
 }
