@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { useAuth } from '../contexts/auth-context';
 import type { Goal, Priority, GoalStatus } from '../types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
@@ -15,31 +15,42 @@ interface GoalDialogProps {
   onSave: (goal: Goal) => void;
 }
 
-const getDefaultStartDate = () => new Date().toISOString().split('T')[0];
-
 export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps) {
   const { user } = useAuth();
-  
-  // Initialize form state from goal prop - key prop on Dialog will reset when goal.id changes
-  const [title, setTitle] = useState(() => goal?.title || '');
-  const [description, setDescription] = useState(() => goal?.description || '');
-  const [startDate, setStartDate] = useState(() => goal?.startDate || getDefaultStartDate());
-  const [dueDate, setDueDate] = useState(() => goal?.dueDate || '');
-  const [priority, setPriority] = useState<Priority>(() => goal?.priority || 'medium');
-  const [status, setStatus] = useState<GoalStatus>(() => goal?.status || 'in_progress');
-  const [category, setCategory] = useState(() => goal?.category || 'Personal');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [priority, setPriority] = useState<Priority>('medium');
+  const [status, setStatus] = useState<GoalStatus>('in_progress');
+  const [category, setCategory] = useState('Personal');
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setTitle('');
     setDescription('');
-    setStartDate(getDefaultStartDate());
+    setStartDate(new Date().toISOString().split('T')[0]);
     setDueDate('');
     setPriority('medium');
     setStatus('in_progress');
     setCategory('Personal');
-  };
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (goal) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTitle(goal.title);
+      setDescription(goal.description || '');
+      setStartDate(goal.startDate);
+      setDueDate(goal.dueDate || '');
+      setPriority(goal.priority);
+      setStatus(goal.status);
+      setCategory(goal.category);
+    } else {
+      resetForm();
+    }
+  }, [goal, open, resetForm]);
+
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
@@ -70,7 +81,7 @@ export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps
             {goal ? 'Update your goal details' : 'Define a new goal to work towards'}
           </DialogDescription>
         </DialogHeader>
-        <form key={goal?.id || 'new'} onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Input

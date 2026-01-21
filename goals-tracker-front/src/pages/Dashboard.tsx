@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/auth-context';
-import type { Goal, Habit, Stats } from '../types';
+import type { Goal, Habit, Stats, UserProgress } from '../types';
 import { getGoals, getHabits, getSteps, getHabitCompletions } from '../lib/storage';
+import { getUserProgress, getXpForNextLevel, getXpProgress } from '../lib/gamification';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
-import { Target, CheckCircle2, Flame, TrendingUp } from 'lucide-react';
+import { Target, CheckCircle2, Flame, TrendingUp, Star, Trophy } from 'lucide-react';
 import { calculateStreak, formatDate } from '../lib/utils-habit';
 
 export function Dashboard() {
@@ -19,15 +20,18 @@ export function Dashboard() {
     activeGoals: 0,
     activeHabits: 0,
   });
+  const [userProgress, setUserProgress] = useState<UserProgress>({ userId: '', xp: 0, level: 1, badges: [] });
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     if (!user) return;
 
     const userGoals = getGoals(user.id);
     const userHabits = getHabits(user.id).filter(h => !h.archived);
+    const progress = getUserProgress(user.id);
     
     setGoals(userGoals);
     setHabits(userHabits);
+    setUserProgress(progress);
 
     // Calculate stats
     const completedGoals = userGoals.filter(g => g.status === 'completed').length;
@@ -54,13 +58,12 @@ export function Dashboard() {
       activeGoals,
       activeHabits: userHabits.length,
     });
-  };
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, loadData]);
 
   const getGoalProgress = (goal: Goal): number => {
     const steps = getSteps(goal.id);
@@ -79,6 +82,8 @@ export function Dashboard() {
   };
 
   const ongoingGoals = goals.filter(g => g.status === 'in_progress').slice(0, 5);
+  const nextLevelXp = getXpForNextLevel(userProgress.level);
+  const progressPercent = getXpProgress(userProgress.xp, userProgress.level);
 
   return (
     <div className="space-y-6">
@@ -88,6 +93,38 @@ export function Dashboard() {
           Welcome back, {user?.name}! Here's your progress overview.
         </p>
       </div>
+
+      {/* Level & XP Card */}
+      <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-indigo-600 p-3 rounded-full">
+                <Star className="size-6 text-white" />
+              </div>
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">Level {userProgress.level}</span>
+                  <Badge variant="secondary" className="bg-yellow-500 text-white">
+                    <Trophy className="size-3 mr-1" />
+                    {userProgress.badges.length} Badges
+                  </Badge>
+                </CardTitle>
+                <CardDescription className="text-indigo-700">
+                  {userProgress.xp} XP • {nextLevelXp - userProgress.xp} XP to next level
+                </CardDescription>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-indigo-600">{userProgress.xp}</div>
+              <div className="text-sm text-muted-foreground">Total XP</div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Progress value={progressPercent} className="h-2" />
+        </CardContent>
+      </Card>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

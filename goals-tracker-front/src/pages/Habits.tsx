@@ -1,4 +1,4 @@
-import { useState, useMemo, useReducer } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/auth-context';
 import type { Habit } from '../types';
 import { getHabits, saveHabit, deleteHabit, getHabitCompletions } from '../lib/storage';
@@ -14,21 +14,23 @@ import { toast } from 'sonner';
 
 export function Habits() {
   const { user } = useAuth();
+  const [habits, setHabits] = useState<Habit[]>([]);
   const [showArchived, setShowArchived] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [trackerHabit, setTrackerHabit] = useState<Habit | null>(null);
-  const [habitsVersion, incrementHabitsVersion] = useReducer((x: number) => x + 1, 0);
 
-  // Derive habits from storage - recalculated when user, showArchived, or version changes
-  const habits = useMemo(() => {
-    if (!user) return [];
-    return getHabits(user.id).filter(h => showArchived || !h.archived);
-  }, [user, showArchived, habitsVersion]);
+  const loadHabits = useCallback(() => {
+    if (!user) return;
+    const userHabits = getHabits(user.id).filter(h => showArchived || !h.archived);
+    setHabits(userHabits);
+  }, [user, showArchived]);
 
-  const loadHabits = () => {
-    incrementHabitsVersion();
-  };
+  useEffect(() => {
+    if (!user) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadHabits();
+  }, [user, showArchived, loadHabits]);
 
   const handleSaveHabit = (habit: Habit) => {
     saveHabit(habit);

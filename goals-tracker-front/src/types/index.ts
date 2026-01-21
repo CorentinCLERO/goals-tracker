@@ -1,16 +1,14 @@
-export type Priority = "low" | "medium" | "high";
-export type GoalStatus = "in_progress" | "completed" | "abandoned";
-export type StepStatus = "todo" | "completed";
-export type Frequency = "daily" | "weekly";
+export type Priority = 'low' | 'medium' | 'high';
+export type GoalStatus = 'in_progress' | 'completed' | 'abandoned';
+export type StepStatus = 'todo' | 'completed';
+export type Frequency = 'daily' | 'weekly';
+export type BadgeType = 'finisher' | 'commitment' | 'streak_master' | 'habit_builder' | 'early_bird' | 'consistent';
 
 export interface User {
   id: string;
   email: string;
   name: string;
-  level?: number;
-  xpPoints?: number;
   createdAt: string;
-  updatedAt?: string;
 }
 
 export interface Goal {
@@ -63,4 +61,39 @@ export interface Stats {
   habitsCompletedToday: number;
   activeGoals: number;
   activeHabits: number;
+}
+
+export interface Badge {
+  id: BadgeType;
+  name: string;
+  description: string;
+  icon: string;
+  requirement: string;
+}
+
+export interface UserAchievement {
+  id: string;
+  userId: string;
+  badgeId: BadgeType;
+  unlockedAt: string;
+  seen: boolean;
+}
+
+export interface UserProgress {
+  userId: string;
+  xp: number;
+  level: number;
+  badges: UserAchievement[];
+}
+
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  xpReward: number;
+  requirement: {
+    type: 'complete_habits' | 'complete_goals' | 'maintain_streak';
+    target: number;
+    days?: number;
+  };
 }
