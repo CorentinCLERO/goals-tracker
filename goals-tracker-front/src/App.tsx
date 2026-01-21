@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Auth } from './pages/Auth';
 import { Goals } from './pages/Goals';
+import { Habits } from './pages/Habits';
 
 function AppContent() {
   const { user } = useAuth();
@@ -18,7 +19,7 @@ function AppContent() {
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
       {activeTab === 'dashboard' && <Dashboard />}
       {activeTab === 'goals' && <Goals />}
-     
+      {activeTab === 'habits' && <Habits />}
     </Layout>
   );
 }
