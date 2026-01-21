@@ -1,14 +1,25 @@
 package com.example.goals_tracker.controller;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.goals_tracker.dto.HabitRequest;
 import com.example.goals_tracker.dto.HabitResponse;
 import com.example.goals_tracker.service.HabitService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
@@ -20,9 +31,10 @@ public class HabitController {
     @PostMapping("/habits")
     public ResponseEntity<HabitResponse> createHabit(
 
-        @AuthenticationPrincipal UUID userId,
         @Valid @RequestBody HabitRequest request) {
-        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();    
+
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -35,11 +47,26 @@ public class HabitController {
     @PutMapping("/habits/{id}")
     public ResponseEntity<HabitResponse> updateHabit(
         @PathVariable UUID id, 
-        @AuthenticationPrincipal UUID userId,
         @Valid @RequestBody HabitRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();    
     
-    HabitResponse response = habitService.updateHabit(id, userId, request);
+        HabitResponse response = habitService.updateHabit(id, userId, request);
 
-    return ResponseEntity.ok(response);
-}
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/habits")
+    public ResponseEntity<List<HabitResponse>> getHabits() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        System.out.println("le user lancé " + userId);
+
+        List<HabitResponse> response = habitService.getListHabit(userId);
+
+        return ResponseEntity.ok(response);
+    }
 }
