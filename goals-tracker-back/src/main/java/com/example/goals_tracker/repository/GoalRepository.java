@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -32,4 +33,6 @@ public interface GoalRepository extends JpaRepository<Goal, UUID> {
             @Param("priority") PriorityEnum priority,
             @Param("sortBy") String sortBy,
             @Param("sortDirection") String sortDirection);
+
+    Optional<Goal> findByIdAndUserId(UUID id, UUID userId);
 }
