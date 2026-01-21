@@ -51,4 +51,28 @@ public class HabitService {
                 .updated_at(habit.getUpdatedAt())
                 .build();
     }
+
+    @Transactional
+    public HabitResponse updateHabit(UUID habitId, UUID userId, HabitRequest request) {
+        Habit habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new RuntimeException("Habitude non trouvée"));
+
+        if (!habit.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Vous n'avez pas l'autorisation de modifier cette habitude");
+        }
+
+        habit.setName(request.getName());
+        habit.setDescription(request.getDescription());
+        habit.setFrequency(request.getFrequency());
+        habit.setWeeklyTarget(request.getWeeklyTarget());
+        habit.setCategory(request.getCategory());
+
+        if (request.getStartDate() != null) {
+            habit.setStartDate(request.getStartDate());
+        }
+
+        Habit updatedHabit = habitRepository.save(habit);
+
+        return mapToResponse(updatedHabit);
+    }
 }
