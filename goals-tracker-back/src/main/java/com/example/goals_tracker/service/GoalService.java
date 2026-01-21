@@ -3,6 +3,7 @@ package com.example.goals_tracker.service;
 import com.example.goals_tracker.dto.GoalRequest;
 import com.example.goals_tracker.dto.GoalResponse;
 import com.example.goals_tracker.dto.GoalsQueryParams;
+import com.example.goals_tracker.exception.BeanNotFoundException;
 import com.example.goals_tracker.model.Goal;
 import com.example.goals_tracker.model.PriorityEnum;
 import com.example.goals_tracker.model.StatusEnum;
@@ -30,7 +31,7 @@ public class GoalService {
         StatusEnum statusEnum = parseStatus(goalRequest.getStatus());
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BeanNotFoundException("User not found"));
 
         Goal goal = Goal.builder()
                 .title(goalRequest.getTitle())
@@ -55,5 +56,48 @@ public class GoalService {
         return goals.stream()
                 .map(GoalResponse::from)
                 .toList();
+    }
+
+    public GoalResponse getGoalById(UUID goalId, UUID userId) {
+        Goal goal = goalRepository.findByIdAndUserId(goalId, userId)
+                .orElseThrow(() -> new BeanNotFoundException("Goal not found"));
+        return GoalResponse.from(goal);
+    }
+
+    public GoalResponse updateGoal(UUID goalId, GoalRequest goalRequest, UUID userId) {
+        Goal existingGoal = goalRepository.findByIdAndUserId(goalId, userId)
+                .orElseThrow(() -> new BeanNotFoundException("Goal not found"));
+        mapFields(goalRequest, existingGoal);
+        Goal updatedGoal = goalRepository.save(existingGoal);
+        return GoalResponse.from(updatedGoal);
+    }
+
+    private void mapFields(GoalRequest request, Goal existingGoal) {
+            existingGoal.setTitle(request.getTitle());
+            existingGoal.setDescription(request.getDescription());
+            existingGoal.setCategory(request.getCategory());
+            PriorityEnum priorityEnum = parsePriority(request.getPriority());
+            StatusEnum statusEnum = parseStatus(request.getStatus());
+            existingGoal.setPriority(priorityEnum);
+            existingGoal.setStatus(statusEnum);
+            existingGoal.setStartDate(LocalDateTime.parse(request.getStartDate()));
+            existingGoal.setDeadline(LocalDateTime.parse(request.getDeadline()));
+    }
+
+    public GoalResponse markGoalAsCompleted(UUID goalId, UUID userId) {
+        Goal existingGoal = goalRepository.findByIdAndUserId(goalId, userId)
+                .orElseThrow(() -> new BeanNotFoundException("Goal not found"));
+        
+        existingGoal.setStatus(StatusEnum.COMPLETED);
+        existingGoal.setCompletedAt(LocalDateTime.now());
+        
+        Goal updatedGoal = goalRepository.save(existingGoal);
+        return GoalResponse.from(updatedGoal);
+    }
+
+    public void deleteGoal(UUID goalId, UUID userId) {
+        Goal existingGoal = goalRepository.findByIdAndUserId(goalId, userId)
+                .orElseThrow(() -> new BeanNotFoundException("Goal not found"));
+        goalRepository.delete(existingGoal);
     }
 }
