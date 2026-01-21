@@ -1,0 +1,18 @@
+package com.example.goals_tracker.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class UpdateStepRequest {
+  private String title;
+  private String deadline;
+  private Integer position;
+  private Boolean isCompleted;
+  private String completedAt;
+}

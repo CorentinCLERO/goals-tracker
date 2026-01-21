@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.goals_tracker.dto.StepRequest;
 import com.example.goals_tracker.dto.StepResponse;
+import com.example.goals_tracker.dto.UpdateStepRequest;
 import com.example.goals_tracker.model.Goal;
 import com.example.goals_tracker.model.Step;
 import com.example.goals_tracker.repository.GoalRepository;
@@ -71,6 +72,77 @@ public class StepService {
     List<Step> steps = stepRepository.findByGoalIdOrderByPositionAsc(goalId);
 
     return steps.stream().map(StepResponse::from).toList();
+  }
+
+  public StepResponse updateStep(UUID goalId, UUID stepId, UpdateStepRequest updateRequest) {
+    // Get the authenticated user ID from SecurityContext
+    UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+    Goal goal = goalRepository.findById(goalId)
+        .orElseThrow(() -> new RuntimeException("Goal not found"));
+
+    // Check if the goal belongs to the authenticated user
+    if (!goal.getUser().getId().equals(userId)) {
+      throw new RuntimeException("Unauthorized: Goal does not belong to user");
+    }
+
+    Step step = stepRepository.findById(stepId)
+        .orElseThrow(() -> new RuntimeException("Step not found"));
+
+    // Verify the step belongs to the goal
+    if (!step.getGoal().getId().equals(goalId)) {
+      throw new RuntimeException("Step does not belong to this goal");
+    }
+
+    Integer oldPosition = step.getPosition();
+    Integer newPosition = updateRequest.getPosition();
+
+    // Handle position change - reorder other steps
+    if (newPosition != null && !newPosition.equals(oldPosition)) {
+      List<Step> allSteps = stepRepository.findByGoalIdOrderByPositionAsc(goalId);
+      
+      if (newPosition < oldPosition) {
+        // Moving up: increment position for steps between new and old position
+        for (Step s : allSteps) {
+          if (!s.getId().equals(stepId) && s.getPosition() >= newPosition && s.getPosition() < oldPosition) {
+            s.setPosition(s.getPosition() + 1);
+            stepRepository.save(s);
+          }
+        }
+      } else {
+        // Moving down: decrement position for steps between old and new position
+        for (Step s : allSteps) {
+          if (!s.getId().equals(stepId) && s.getPosition() > oldPosition && s.getPosition() <= newPosition) {
+            s.setPosition(s.getPosition() - 1);
+            stepRepository.save(s);
+          }
+        }
+      }
+      
+      step.setPosition(newPosition);
+    }
+
+    // Update other fields
+    if (updateRequest.getTitle() != null) {
+      step.setTitle(updateRequest.getTitle());
+    }
+    if (updateRequest.getDeadline() != null) {
+      step.setDeadline(LocalDateTime.parse(updateRequest.getDeadline()));
+    }
+    if (updateRequest.getIsCompleted() != null) {
+      step.setIsCompleted(updateRequest.getIsCompleted());
+      // Set completedAt when marking as completed
+      if (updateRequest.getIsCompleted() && step.getCompletedAt() == null) {
+        step.setCompletedAt(LocalDateTime.now());
+      }
+      // Clear completedAt when marking as not completed
+      if (!updateRequest.getIsCompleted()) {
+        step.setCompletedAt(null);
+      }
+    }
+
+    Step updatedStep = stepRepository.save(step);
+    return StepResponse.from(updatedStep);
   }
 
 }
