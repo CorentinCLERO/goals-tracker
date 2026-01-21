@@ -51,7 +51,7 @@ jobs:
           ./mvnw -B test
 
   build-and-push:
-    if: github.ref == 'refs/heads/main'
+    #if: github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
     environment: githubaction
@@ -61,11 +61,11 @@ jobs:
         include:
           - service: back
             build_path: goals-tracker-back
-            image_name: my-backend
+            image_name: goals-tracker-back
             dockerfile: Dockerfile
           - service: front
             build_path: goals-tracker-front
-            image_name: my-frontend
+            image_name: goals-tracker-front
             dockerfile: Dockerfile
 
     steps:
@@ -95,8 +95,7 @@ jobs:
 
       - name: Trigger Render deploy via API
         env:
-          RENDER_SERVICE_ID_BACKEND: srv-d1a0p495pdvs73aaslr0
-          RENDER_SERVICE_ID_WORKER: srv-d1bdje2dbo4c73cdv69g
+          RENDER_SERVICE_ID_BACKEND: srv-d5npmbv5r7bs73dtqhr0
           RENDER_API_TOKEN: ${{ secrets.RENDER_API_TOKEN }}
         run: |
           echo "Triggering backend deploy..."
