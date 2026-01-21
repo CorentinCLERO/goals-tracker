@@ -13,7 +13,10 @@ export interface AuthContextType {
     name: string,
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  updateProfile: (name: string, email: string) => void;
+  updateProfile: (
+    name: string,
+    email: string,
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(

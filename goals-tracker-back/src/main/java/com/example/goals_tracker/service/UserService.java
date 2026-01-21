@@ -3,6 +3,7 @@ package com.example.goals_tracker.service;
 import com.example.goals_tracker.dto.CreateUserRequest;
 import com.example.goals_tracker.dto.LoginRequest;
 import com.example.goals_tracker.dto.LoginResponse;
+import com.example.goals_tracker.dto.UpdateUserRequest;
 import com.example.goals_tracker.dto.UserResponse;
 import com.example.goals_tracker.model.User;
 import com.example.goals_tracker.repository.UserRepository;
@@ -70,6 +71,32 @@ public class UserService {
                 .xpPoints(user.getXpPoints())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
+                .build();
+    }
+    
+    @Transactional
+    public UserResponse updateUser(UUID userId, UpdateUserRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Check if email is being changed and if it already exists
+        if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException("Email already exists: " + request.getEmail());
+        }
+        
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        
+        User updatedUser = userRepository.save(user);
+        
+        return UserResponse.builder()
+                .id(updatedUser.getId())
+                .email(updatedUser.getEmail())
+                .name(updatedUser.getName())
+                .level(updatedUser.getLevel())
+                .xpPoints(updatedUser.getXpPoints())
+                .createdAt(updatedUser.getCreatedAt())
+                .updatedAt(updatedUser.getUpdatedAt())
                 .build();
     }
 }

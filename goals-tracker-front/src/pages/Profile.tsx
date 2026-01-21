@@ -1,25 +1,55 @@
-import React, { useState } from 'react';
-import { useAuth } from '../contexts/auth-context';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { User, Save, Trophy, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { useGamification } from '../hooks/useGamification';
+import React, { useState } from "react";
+import { useAuth } from "../contexts/auth-context";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { User, Save, Trophy } from "lucide-react";
+import { toast } from "sonner";
+import { getUserProgress, BADGES } from "../lib/gamification";
 
 export function Profile() {
   const { user, updateProfile } = useAuth();
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  
-  const { userProgress, availableBadges, loading } = useGamification(user?.id || "");
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const userProgress = user
+    ? getUserProgress(user.id)
+    : { xp: 0, level: 1, badges: [] };
+  const unlockedBadgeIds = new Set(
+    userProgress.badges.map((b: { badgeId: string }) => b.badgeId),
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile(name, email);
-    toast.success('Profile updated successfully!');
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await updateProfile(name, email);
+      if (result.success) {
+        toast.success("Profil mis à jour avec succès !");
+      } else {
+        setError(result.error || "Erreur lors de la mise à jour du profil");
+        toast.error(result.error || "Erreur lors de la mise à jour du profil");
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Erreur inconnue";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const unlockedBadgeIds = new Set(userProgress.badges.map(b => b.badgeId));
@@ -51,7 +81,9 @@ export function Profile() {
             </div>
             <div>
               <CardTitle>Your Achievements</CardTitle>
-              <CardDescription>Level {userProgress.level} • {userProgress.xp} XP</CardDescription>
+              <CardDescription>
+                Level {userProgress.level} • {userProgress.xp} XP
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -63,25 +95,36 @@ export function Profile() {
                 {unlockedBadgeIds.size} / {availableBadges.length}
               </Badge>
             </div>
-            
-            {unlockedBadges.length > 0 && (
+
+            {unlockedBadgeIds.size > 0 && (
               <div className="flex flex-wrap gap-2">
-                {unlockedBadges.map((badge) => (
-                  <div
-                    key={badge.id}
-                    className="flex items-center gap-2 px-3 py-2 bg-white border-2 border-yellow-400 rounded-lg"
-                  >
-                    <span className="text-2xl">{badge.icon}</span>
-                    <div>
-                      <div className="text-sm font-medium">{badge.name}</div>
-                      <div className="text-xs text-muted-foreground">{badge.description}</div>
+                {BADGES.filter((b: { id: string }) =>
+                  unlockedBadgeIds.has(b.id),
+                ).map(
+                  (badge: {
+                    id: string;
+                    icon: string;
+                    name: string;
+                    description: string;
+                  }) => (
+                    <div
+                      key={badge.id}
+                      className="flex items-center gap-2 px-3 py-2 bg-white border-2 border-yellow-400 rounded-lg"
+                    >
+                      <span className="text-2xl">{badge.icon}</span>
+                      <div>
+                        <div className="text-sm font-medium">{badge.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {badge.description}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             )}
-            
-            {unlockedBadges.length === 0 && (
+
+            {unlockedBadgeIds.size === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
                 Complete goals and maintain streaks to unlock badges!
               </p>
@@ -104,14 +147,23 @@ export function Profile() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
                 value={name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setName(e.target.value)
+                }
                 placeholder="Your name"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -121,22 +173,26 @@ export function Profile() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setEmail(e.target.value)
+                }
                 placeholder="your@email.com"
                 required
+                disabled={isLoading}
               />
             </div>
 
             <div className="space-y-2">
               <Label>Account Created</Label>
               <p className="text-sm text-muted-foreground">
-                {user?.createdAt && new Date(user.createdAt).toLocaleDateString()}
+                {user?.createdAt &&
+                  new Date(user.createdAt).toLocaleDateString()}
               </p>
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading}>
               <Save className="size-4 mr-2" />
-              Save Changes
+              {isLoading ? "Mise à jour..." : "Sauvegarder les modifications"}
             </Button>
           </form>
         </CardContent>
@@ -149,12 +205,13 @@ export function Profile() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
-            This application helps you track your personal and professional goals while
-            building positive habits through gamification and progress tracking.
+            This application helps you track your personal and professional
+            goals while building positive habits through gamification and
+            progress tracking.
           </p>
           <p className="text-xs">
-            Note: Data is stored locally in your browser. Clearing browser data will
-            reset your progress.
+            Note: Data is stored locally in your browser. Clearing browser data
+            will reset your progress.
           </p>
         </CardContent>
       </Card>
