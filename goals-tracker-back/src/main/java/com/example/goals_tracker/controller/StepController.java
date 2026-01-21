@@ -59,6 +59,30 @@ public class StepController {
     return ResponseEntity.ok(updatedStep);
   }
 
+  @PatchMapping("/{stepId}/complete")
+  public ResponseEntity<StepResponse> completeStep(
+      @PathVariable("id") UUID goalId,
+      @PathVariable("stepId") UUID stepId) {
+    log.info("Marking step {} as completed in goal {}", stepId, goalId);
+    
+    StepResponse updatedStep = stepService.completeStep(goalId, stepId, true);
+    log.info("Successfully marked step {} as completed", stepId);
+    
+    return ResponseEntity.ok(updatedStep);
+  }
+
+  @PatchMapping("/{stepId}/uncomplete")
+  public ResponseEntity<StepResponse> uncompleteStep(
+      @PathVariable("id") UUID goalId,
+      @PathVariable("stepId") UUID stepId) {
+    log.info("Marking step {} as not completed in goal {}", stepId, goalId);
+    
+    StepResponse updatedStep = stepService.completeStep(goalId, stepId, false);
+    log.info("Successfully marked step {} as not completed", stepId);
+    
+    return ResponseEntity.ok(updatedStep);
+  }
+
   @DeleteMapping("/{stepId}")
   public ResponseEntity<Void> deleteStep(
       @PathVariable("id") UUID goalId,

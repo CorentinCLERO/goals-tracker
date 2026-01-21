@@ -13,6 +13,4 @@ public class UpdateStepRequest {
   private String title;
   private String deadline;
   private Integer position;
-  private Boolean isCompleted;
-  private String completedAt;
 }

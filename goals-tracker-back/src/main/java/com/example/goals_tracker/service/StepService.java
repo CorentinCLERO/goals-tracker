@@ -129,16 +129,40 @@ public class StepService {
     if (updateRequest.getDeadline() != null) {
       step.setDeadline(LocalDateTime.parse(updateRequest.getDeadline()));
     }
-    if (updateRequest.getIsCompleted() != null) {
-      step.setIsCompleted(updateRequest.getIsCompleted());
-      // Set completedAt when marking as completed
-      if (updateRequest.getIsCompleted() && step.getCompletedAt() == null) {
-        step.setCompletedAt(LocalDateTime.now());
-      }
-      // Clear completedAt when marking as not completed
-      if (!updateRequest.getIsCompleted()) {
-        step.setCompletedAt(null);
-      }
+
+    Step updatedStep = stepRepository.save(step);
+    return StepResponse.from(updatedStep);
+  }
+
+  public StepResponse completeStep(UUID goalId, UUID stepId, boolean completed) {
+    // Get the authenticated user ID from SecurityContext
+    UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+    Goal goal = goalRepository.findById(goalId)
+        .orElseThrow(() -> new RuntimeException("Goal not found"));
+
+    // Check if the goal belongs to the authenticated user
+    if (!goal.getUser().getId().equals(userId)) {
+      throw new RuntimeException("Unauthorized: Goal does not belong to user");
+    }
+
+    Step step = stepRepository.findById(stepId)
+        .orElseThrow(() -> new RuntimeException("Step not found"));
+
+    // Verify the step belongs to the goal
+    if (!step.getGoal().getId().equals(goalId)) {
+      throw new RuntimeException("Step does not belong to this goal");
+    }
+
+    step.setIsCompleted(completed);
+    
+    // Set completedAt when marking as completed
+    if (completed && step.getCompletedAt() == null) {
+      step.setCompletedAt(LocalDateTime.now());
+    }
+    // Clear completedAt when marking as not completed
+    if (!completed) {
+      step.setCompletedAt(null);
     }
 
     Step updatedStep = stepRepository.save(step);
