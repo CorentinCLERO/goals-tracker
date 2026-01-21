@@ -1,4 +1,4 @@
-import { HabitCompletion } from '../types';
+import type { HabitCompletion } from '../types';
 
 export function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];

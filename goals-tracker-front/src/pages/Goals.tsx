@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useReducer } from 'react';
+import { useState, useMemo, useReducer } from 'react';
 import { useAuth } from '../contexts/auth-context';
 import type { Goal, Priority, GoalStatus } from '../types';
 import { getGoals, saveGoal, deleteGoal, getSteps } from '../lib/storage';

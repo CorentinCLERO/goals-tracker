@@ -1,4 +1,4 @@
-import { User, Goal, Step, Habit, HabitCompletion } from '../types';
+import type { User, Goal, Step, Habit, HabitCompletion } from '../types';
 
 // LocalStorage keys
 const KEYS = {
