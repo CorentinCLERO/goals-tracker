@@ -1,52 +1,70 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../contexts/auth-context';
-import type { Goal, Priority, GoalStatus } from '../types';
-import { getGoals, saveGoal, deleteGoal, getSteps } from '../lib/storage';
-import { addXp, XP_REWARDS } from '../lib/gamification';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { Progress } from '../components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Calendar, Eye } from 'lucide-react';
-import { GoalDialog } from './GoalDialog';
-import { GoalDetail } from './GoalDetail';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../contexts/auth-context";
+import type { Goal, Priority, GoalStatus } from "../types";
+import { apiClient } from "../lib/api";
+import { getSteps } from "../lib/storage";
+import { addXp, XP_REWARDS } from "../lib/gamification";
+import { Button } from "../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Progress } from "../components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { Plus, Calendar, Eye } from "lucide-react";
+import { GoalDialog } from "./GoalDialog";
+import { GoalDetail } from "./GoalDetail";
+import { toast } from "sonner";
 
 export function Goals() {
   const { user } = useAuth();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [filteredGoals, setFilteredGoals] = useState<Goal[]>([]);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('dueDate');
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("deadline");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  const loadGoals = useCallback(() => {
+  const loadGoals = useCallback(async () => {
     if (!user) return;
-    const userGoals = getGoals(user.id);
-    setGoals(userGoals);
+    try {
+      const userGoals = await apiClient.getGoals();
+      setGoals(userGoals);
+    } catch (error) {
+      console.error("Failed to load goals:", error);
+      toast.error("Failed to load goals");
+    }
   }, [user]);
 
   const applyFiltersAndSort = useCallback(() => {
     let filtered = [...goals];
 
     // Apply filters
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(g => g.status === filterStatus);
+    if (filterStatus !== "all") {
+      filtered = filtered.filter((g) => g.status === filterStatus);
     }
-    if (filterPriority !== 'all') {
-      filtered = filtered.filter(g => g.priority === filterPriority);
+    if (filterPriority !== "all") {
+      filtered = filtered.filter((g) => g.priority === filterPriority);
     }
 
     // Apply sorting
     filtered.sort((a, b) => {
-      if (sortBy === 'dueDate') {
-        if (!a.dueDate) return 1;
-        if (!b.dueDate) return -1;
-        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      if (sortBy === "deadline") {
+        if (!a.deadline) return 1;
+        if (!b.deadline) return -1;
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
       }
       return 0;
     });
@@ -65,36 +83,64 @@ export function Goals() {
     applyFiltersAndSort();
   }, [applyFiltersAndSort]);
 
-  const handleSaveGoal = (goal: Goal) => {
-    saveGoal(goal);
-    loadGoals();
-    setIsDialogOpen(false);
-    toast.success(selectedGoal ? 'Goal updated successfully!' : 'Goal created successfully!');
-  };
-
-  const handleDeleteGoal = (goalId: string) => {
-    deleteGoal(goalId);
-    loadGoals();
-    toast.success('Goal deleted successfully!');
-  };
-
-  const handleMarkComplete = (goal: Goal) => {
-    const updatedGoal = { ...goal, status: 'completed' as GoalStatus, updatedAt: new Date().toISOString() };
-    saveGoal(updatedGoal);
-    loadGoals();
-    
-    // Award XP when completing a goal
-    if (user) {
-      const { newXp, leveledUp, newLevel } = addXp(user.id, XP_REWARDS.COMPLETE_GOAL);
-      toast.success(`Goal completed! +${XP_REWARDS.COMPLETE_GOAL} XP`, {
-        description: `You now have ${newXp} XP!`,
-      });
-      
-      if (leveledUp) {
-        toast.success(`🎉 Level Up! You're now level ${newLevel}!`, {
-          duration: 5000,
-        });
+  const handleSaveGoal = async (goal: Goal) => {
+    try {
+      if (selectedGoal) {
+        // Update existing goal
+        await apiClient.updateGoal(goal.id, goal);
+      } else {
+        // Create new goal
+        const { ...goalData } = goal;
+        await apiClient.createGoal(goalData);
       }
+      await loadGoals();
+      setIsDialogOpen(false);
+      toast.success(
+        selectedGoal
+          ? "Goal updated successfully!"
+          : "Goal created successfully!",
+      );
+    } catch (error) {
+      console.error("Failed to save goal:", error);
+      toast.error("Failed to save goal");
+    }
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    try {
+      await apiClient.deleteGoal(goalId);
+      await loadGoals();
+      toast.success("Goal deleted successfully!");
+    } catch (error) {
+      console.error("Failed to delete goal:", error);
+      toast.error("Failed to delete goal");
+    }
+  };
+
+  const handleMarkComplete = async (goal: Goal) => {
+    try {
+      await apiClient.markGoalCompleted(goal.id);
+      await loadGoals();
+
+      // Award XP when completing a goal
+      if (user) {
+        const { newXp, leveledUp, newLevel } = addXp(
+          user.id,
+          XP_REWARDS.COMPLETE_GOAL,
+        );
+        toast.success(`Goal completed! +${XP_REWARDS.COMPLETE_GOAL} XP`, {
+          description: `You now have ${newXp} XP!`,
+        });
+
+        if (leveledUp) {
+          toast.success(`🎉 Level Up! You're now level ${newLevel}!`, {
+            duration: 5000,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to mark goal as completed:", error);
+      toast.error("Failed to complete goal");
     }
   };
 
@@ -111,31 +157,40 @@ export function Goals() {
   const getGoalProgress = (goal: Goal): number => {
     const steps = getSteps(goal.id);
     if (steps.length === 0) return 0;
-    const completedSteps = steps.filter(s => s.status === 'completed').length;
+    const completedSteps = steps.filter((s) => s.isCompleted).length;
     return Math.round((completedSteps / steps.length) * 100);
   };
 
   const getPriorityColor = (priority: Priority) => {
     switch (priority) {
-      case 'high': return 'bg-red-500';
-      case 'medium': return 'bg-yellow-500';
-      case 'low': return 'bg-green-500';
+      case "high":
+        return "bg-red-500";
+      case "medium":
+        return "bg-yellow-500";
+      case "low":
+        return "bg-green-500";
     }
   };
 
   const getStatusColor = (status: GoalStatus) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'abandoned': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "in_progress":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "abandoned":
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const formatStatus = (status: GoalStatus) => {
     switch (status) {
-      case 'in_progress': return 'In Progress';
-      case 'completed': return 'Completed';
-      case 'abandoned': return 'Abandoned';
+      case "in_progress":
+        return "In Progress";
+      case "completed":
+        return "Completed";
+      case "abandoned":
+        return "Abandoned";
     }
   };
 
@@ -148,10 +203,12 @@ export function Goals() {
             Manage and track your personal and professional goals
           </p>
         </div>
-        <Button onClick={() => {
-          setSelectedGoal(null);
-          setIsDialogOpen(true);
-        }}>
+        <Button
+          onClick={() => {
+            setSelectedGoal(null);
+            setIsDialogOpen(true);
+          }}
+        >
           <Plus className="size-4 mr-2" />
           New Goal
         </Button>
@@ -199,7 +256,7 @@ export function Goals() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="dueDate">Due Date</SelectItem>
+                  <SelectItem value="deadline">Due Date</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -220,19 +277,24 @@ export function Goals() {
             </Card>
           </div>
         ) : (
-          filteredGoals.map(goal => {
+          filteredGoals.map((goal) => {
             const progress = getGoalProgress(goal);
             return (
               <Card key={goal.id} className="flex flex-col">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-lg line-clamp-2">{goal.title}</CardTitle>
-                    <Badge variant="outline" className={`${getPriorityColor(goal.priority)} text-white border-0 shrink-0`}>
+                    <CardTitle className="text-lg line-clamp-2">
+                      {goal.title}
+                    </CardTitle>
+                    <Badge
+                      variant="outline"
+                      className={`${getPriorityColor(goal.priority)} text-white border-0 shrink-0`}
+                    >
                       {goal.priority}
                     </Badge>
                   </div>
                   <CardDescription className="line-clamp-2">
-                    {goal.description || 'No description'}
+                    {goal.description || "No description"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col justify-between space-y-4">
@@ -242,18 +304,23 @@ export function Goals() {
                       <span>{progress}%</span>
                     </div>
                     <Progress value={progress} className="h-2" />
-                    
+
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline" className={getStatusColor(goal.status)}>
+                      <Badge
+                        variant="outline"
+                        className={getStatusColor(goal.status)}
+                      >
                         {formatStatus(goal.status)}
                       </Badge>
                       <Badge variant="outline">{goal.category}</Badge>
                     </div>
 
-                    {goal.dueDate && (
+                    {goal.deadline && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="size-4" />
-                        <span>Due: {new Date(goal.dueDate).toLocaleDateString()}</span>
+                        <span>
+                          Due: {new Date(goal.deadline).toLocaleDateString()}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -268,7 +335,7 @@ export function Goals() {
                       <Eye className="size-4 mr-2" />
                       View
                     </Button>
-                    {goal.status === 'in_progress' && (
+                    {goal.status === "in_progress" && (
                       <Button
                         variant="default"
                         size="sm"
@@ -298,8 +365,8 @@ export function Goals() {
           open={isDetailOpen}
           onOpenChange={setIsDetailOpen}
           goal={selectedGoal}
-          onUpdate={() => {
-            loadGoals();
+          onUpdate={async () => {
+            await loadGoals();
             setIsDetailOpen(false);
           }}
           onDelete={() => {

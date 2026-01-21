@@ -1,12 +1,24 @@
-import { useState, useEffect, useCallback, type FormEvent } from 'react';
-import { useAuth } from '../contexts/auth-context';
-import type { Goal, Priority, GoalStatus } from '../types';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { useState, useEffect, useCallback, type FormEvent } from "react";
+import { useAuth } from "../contexts/auth-context";
+import type { Goal, Priority, GoalStatus } from "../types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 
 interface GoalDialogProps {
   open: boolean;
@@ -15,33 +27,38 @@ interface GoalDialogProps {
   onSave: (goal: Goal) => void;
 }
 
-export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps) {
+export function GoalDialog({
+  open,
+  onOpenChange,
+  goal,
+  onSave,
+}: GoalDialogProps) {
   const { user } = useAuth();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [priority, setPriority] = useState<Priority>('medium');
-  const [status, setStatus] = useState<GoalStatus>('in_progress');
-  const [category, setCategory] = useState('Personal');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [priority, setPriority] = useState<Priority>("medium");
+  const [status, setStatus] = useState<GoalStatus>("in_progress");
+  const [category, setCategory] = useState("Personal");
 
   const resetForm = useCallback(() => {
-    setTitle('');
-    setDescription('');
-    setStartDate(new Date().toISOString().split('T')[0]);
-    setDueDate('');
-    setPriority('medium');
-    setStatus('in_progress');
-    setCategory('Personal');
+    setTitle("");
+    setDescription("");
+    setStartDate(new Date().toISOString().split("T")[0]);
+    setDeadline("");
+    setPriority("medium");
+    setStatus("in_progress");
+    setCategory("Personal");
   }, []);
 
   useEffect(() => {
     if (goal) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle(goal.title);
-      setDescription(goal.description || '');
-      setStartDate(goal.startDate);
-      setDueDate(goal.dueDate || '');
+      setDescription(goal.description || "");
+      setStartDate(goal.startDate.split("T")[0]); // Convert datetime to date
+      setDeadline(goal.deadline ? goal.deadline.split("T")[0] : ""); // Convert datetime to date
       setPriority(goal.priority);
       setStatus(goal.status);
       setCategory(goal.category);
@@ -54,13 +71,19 @@ export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps
     e.preventDefault();
     if (!user) return;
 
+    // Convert date strings to full datetime strings for backend
+    const startDateTime = startDate
+      ? `${startDate}T00:00:00`
+      : new Date().toISOString();
+    const deadlineDateTime = deadline ? `${deadline}T23:59:59` : undefined;
+
     const goalData: Goal = {
       id: goal?.id || crypto.randomUUID(),
       userId: user.id,
       title,
       description: description || undefined,
-      startDate,
-      dueDate: dueDate || undefined,
+      startDate: startDateTime,
+      deadline: deadlineDateTime,
       priority,
       status,
       category,
@@ -76,9 +99,11 @@ export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{goal ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
+          <DialogTitle>{goal ? "Edit Goal" : "Create New Goal"}</DialogTitle>
           <DialogDescription>
-            {goal ? 'Update your goal details' : 'Define a new goal to work towards'}
+            {goal
+              ? "Update your goal details"
+              : "Define a new goal to work towards"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -117,12 +142,12 @@ export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date</Label>
+              <Label htmlFor="deadline">Due Date</Label>
               <Input
-                id="dueDate"
+                id="deadline"
                 type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
               />
             </div>
           </div>
@@ -130,7 +155,10 @@ export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
-              <Select value={priority} onValueChange={(value) => setPriority(value as Priority)}>
+              <Select
+                value={priority}
+                onValueChange={(value) => setPriority(value as Priority)}
+              >
                 <SelectTrigger id="priority">
                   <SelectValue />
                 </SelectTrigger>
@@ -144,7 +172,10 @@ export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps
 
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={(value) => setStatus(value as GoalStatus)}>
+              <Select
+                value={status}
+                onValueChange={(value) => setStatus(value as GoalStatus)}
+              >
                 <SelectTrigger id="status">
                   <SelectValue />
                 </SelectTrigger>
@@ -175,11 +206,15 @@ export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps
           </div>
 
           <div className="flex gap-2 justify-end pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit">
-              {goal ? 'Update Goal' : 'Create Goal'}
+              {goal ? "Update Goal" : "Create Goal"}
             </Button>
           </div>
         </form>

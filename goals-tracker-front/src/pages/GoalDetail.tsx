@@ -1,18 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { Goal, Step } from '../types';
-import { getSteps, saveStep, deleteStep } from '../lib/storage';
-import { addXp, XP_REWARDS } from '../lib/gamification';
-import { useAuth } from '../contexts/auth-context';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Badge } from '../components/ui/badge';
-import { Progress } from '../components/ui/progress';
-import { Checkbox } from '../components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Plus, Trash2, Edit, Calendar } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback } from "react";
+import type { Goal, Step } from "../types";
+import { apiClient } from "../lib/api";
+import { addXp, XP_REWARDS } from "../lib/gamification";
+import { useAuth } from "../contexts/auth-context";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
+import { Progress } from "../components/ui/progress";
+import { Checkbox } from "../components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Plus, Trash2, Edit, Calendar } from "lucide-react";
+import { toast } from "sonner";
 
 interface GoalDetailProps {
   open: boolean;
@@ -23,16 +34,27 @@ interface GoalDetailProps {
   onEdit: () => void;
 }
 
-export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdit }: GoalDetailProps) {
+export function GoalDetail({
+  open,
+  onOpenChange,
+  goal,
+  onUpdate,
+  onDelete,
+  onEdit,
+}: GoalDetailProps) {
   const { user } = useAuth();
   const [steps, setSteps] = useState<Step[]>([]);
-  const [newStepTitle, setNewStepTitle] = useState('');
-  const [newStepDueDate, setNewStepDueDate] = useState('');
+  const [newStepTitle, setNewStepTitle] = useState("");
+  const [newStepDeadline, setNewStepDeadline] = useState("");
 
-  const loadSteps = useCallback(() => {
+  const loadSteps = useCallback(async () => {
     if (!goal) return;
-    const goalSteps = getSteps(goal.id);
-    setSteps(goalSteps);
+    try {
+      const goalSteps = await apiClient.getSteps(goal.id);
+      setSteps(goalSteps);
+    } catch (error) {
+      console.error("Failed to load steps:", error);
+    }
   }, [goal]);
 
   useEffect(() => {
@@ -42,86 +64,119 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
     }
   }, [open, goal, loadSteps]);
 
-  const handleAddStep = (e: React.FormEvent) => {
+  const handleAddStep = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStepTitle.trim()) return;
 
-    const newStep: Step = {
-      id: crypto.randomUUID(),
-      goalId: goal.id,
-      title: newStepTitle,
-      dueDate: newStepDueDate || undefined,
-      status: 'todo',
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      // Calculate position based on existing steps
+      const maxPosition =
+        steps.length > 0 ? Math.max(...steps.map((s) => s.position)) : 0;
+      const position = maxPosition + 1;
 
-    saveStep(newStep);
-    loadSteps();
-    setNewStepTitle('');
-    setNewStepDueDate('');
-    toast.success('Step added!');
-  };
+      const stepData = {
+        title: newStepTitle,
+        deadline: newStepDeadline ? `${newStepDeadline}T23:59:59` : undefined,
+        position,
+      };
 
-  const handleToggleStep = (step: Step) => {
-    const updatedStep: Step = {
-      ...step,
-      status: step.status === 'completed' ? 'todo' : 'completed',
-    };
-    saveStep(updatedStep);
-    
-    // Award XP when completing a step
-    if (updatedStep.status === 'completed' && user) {
-      const { leveledUp, newLevel } = addXp(user.id, XP_REWARDS.COMPLETE_STEP);
-      toast.success(`Step completed! +${XP_REWARDS.COMPLETE_STEP} XP`);
-      
-      if (leveledUp) {
-        toast.success(`🎉 Level Up! You're now level ${newLevel}!`, {
-          duration: 5000,
-        });
-      }
+      await apiClient.createStep(goal.id, stepData);
+      await loadSteps();
+      setNewStepTitle("");
+      setNewStepDeadline("");
+      toast.success("Step added!");
+      onUpdate();
+    } catch (error) {
+      console.error("Failed to add step:", error);
+      toast.error("Failed to add step");
     }
-    
-    loadSteps();
-    onUpdate();
   };
 
-  const handleDeleteStep = (stepId: string) => {
-    deleteStep(stepId);
-    loadSteps();
-    onUpdate();
-    toast.success('Step deleted!');
+  const handleToggleStep = async (step: Step) => {
+    try {
+      if (step.isCompleted) {
+        await apiClient.markStepUncompleted(goal.id, step.id);
+      } else {
+        await apiClient.markStepCompleted(goal.id, step.id);
+
+        // Award XP when completing a step
+        if (user) {
+          const { leveledUp, newLevel } = addXp(
+            user.id,
+            XP_REWARDS.COMPLETE_STEP,
+          );
+          toast.success(`Step completed! +${XP_REWARDS.COMPLETE_STEP} XP`);
+
+          if (leveledUp) {
+            toast.success(`🎉 Level Up! You're now level ${newLevel}!`, {
+              duration: 5000,
+            });
+          }
+        }
+      }
+
+      await loadSteps();
+      onUpdate();
+    } catch (error) {
+      console.error("Failed to toggle step:", error);
+      toast.error("Failed to update step");
+    }
+  };
+
+  const handleDeleteStep = async (stepId: string) => {
+    try {
+      await apiClient.deleteStep(goal.id, stepId);
+      await loadSteps();
+      onUpdate();
+      toast.success("Step deleted!");
+    } catch (error) {
+      console.error("Failed to delete step:", error);
+      toast.error("Failed to delete step");
+    }
   };
 
   const getProgress = (): number => {
     if (steps.length === 0) return 0;
-    const completedSteps = steps.filter(s => s.status === 'completed').length;
+    const completedSteps = steps.filter((s) => s.isCompleted).length;
     return Math.round((completedSteps / steps.length) * 100);
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-500';
-      case 'medium': return 'bg-yellow-500';
-      case 'low': return 'bg-green-500';
-      default: return 'bg-gray-500';
+      case "high":
+        return "bg-red-500";
+      case "medium":
+        return "bg-yellow-500";
+      case "low":
+        return "bg-green-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'abandoned': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "in_progress":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "abandoned":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const formatStatus = (status: string) => {
     switch (status) {
-      case 'in_progress': return 'In Progress';
-      case 'completed': return 'Completed';
-      case 'abandoned': return 'Abandoned';
-      default: return status;
+      case "in_progress":
+        return "In Progress";
+      case "completed":
+        return "Completed";
+      case "abandoned":
+        return "Abandoned";
+      default:
+        return status;
     }
   };
 
@@ -131,7 +186,7 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
         <DialogHeader>
           <DialogTitle className="text-2xl">{goal.title}</DialogTitle>
           <DialogDescription>
-            {goal.description || 'No description provided'}
+            {goal.description || "No description provided"}
           </DialogDescription>
         </DialogHeader>
 
@@ -140,24 +195,33 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Priority</p>
-              <Badge className={`${getPriorityColor(goal.priority)} text-white border-0 mt-1`}>
+              <Badge
+                className={`${getPriorityColor(goal.priority)} text-white border-0 mt-1`}
+              >
                 {goal.priority}
               </Badge>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Status</p>
-              <Badge variant="outline" className={`${getStatusColor(goal.status)} mt-1`}>
+              <Badge
+                variant="outline"
+                className={`${getStatusColor(goal.status)} mt-1`}
+              >
                 {formatStatus(goal.status)}
               </Badge>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Category</p>
-              <Badge variant="outline" className="mt-1">{goal.category}</Badge>
+              <Badge variant="outline" className="mt-1">
+                {goal.category}
+              </Badge>
             </div>
-            {goal.dueDate && (
+            {goal.deadline && (
               <div>
                 <p className="text-sm text-muted-foreground">Due Date</p>
-                <p className="text-sm mt-1">{new Date(goal.dueDate).toLocaleDateString()}</p>
+                <p className="text-sm mt-1">
+                  {new Date(goal.deadline).toLocaleDateString()}
+                </p>
               </div>
             )}
           </div>
@@ -170,7 +234,10 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>{steps.filter(s => s.status === 'completed').length} of {steps.length} steps completed</span>
+                  <span>
+                    {steps.filter((s) => s.status === "completed").length} of{" "}
+                    {steps.length} steps completed
+                  </span>
                   <span>{getProgress()}%</span>
                 </div>
                 <Progress value={getProgress()} className="h-2" />
@@ -201,8 +268,8 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
                     <Input
                       id="step-date"
                       type="date"
-                      value={newStepDueDate}
-                      onChange={(e) => setNewStepDueDate(e.target.value)}
+                      value={newStepDeadline}
+                      onChange={(e) => setNewStepDeadline(e.target.value)}
                     />
                   </div>
                 </div>
@@ -219,28 +286,30 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
                     No steps yet. Add steps to break down your goal.
                   </p>
                 ) : (
-                  steps.map(step => (
+                  steps.map((step) => (
                     <div
                       key={step.id}
                       className="flex items-center gap-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
                     >
                       <Checkbox
-                        checked={step.status === 'completed'}
+                        checked={step.isCompleted}
                         onCheckedChange={() => handleToggleStep(step)}
                         id={`step-${step.id}`}
                       />
                       <label
                         htmlFor={`step-${step.id}`}
                         className={`flex-1 cursor-pointer ${
-                          step.status === 'completed' ? 'line-through text-muted-foreground' : ''
+                          step.isCompleted
+                            ? "line-through text-muted-foreground"
+                            : ""
                         }`}
                       >
                         {step.title}
                       </label>
-                      {step.dueDate && (
+                      {step.deadline && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Calendar className="size-3" />
-                          {new Date(step.dueDate).toLocaleDateString()}
+                          {new Date(step.deadline).toLocaleDateString()}
                         </div>
                       )}
                       <Button
