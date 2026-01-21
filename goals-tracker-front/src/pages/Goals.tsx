@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useReducer } from 'react';
 import { useAuth } from '../contexts/auth-context';
 import type { Goal, Priority, GoalStatus } from '../types';
 import { getGoals, saveGoal, deleteGoal, getSteps } from '../lib/storage';
@@ -14,31 +14,26 @@ import { toast } from 'sonner';
 
 export function Goals() {
   const { user } = useAuth();
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [filteredGoals, setFilteredGoals] = useState<Goal[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('dueDate');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [goalsVersion, incrementGoalsVersion] = useReducer((x: number) => x + 1, 0);
 
-  useEffect(() => {
-    if (!user) return;
-    loadGoals();
-  }, [user]);
-
-  useEffect(() => {
-    applyFiltersAndSort();
-  }, [goals, filterStatus, filterPriority, sortBy]);
+  // Derive goals from storage - recalculated when user or version changes
+  const goals = useMemo(() => {
+    if (!user) return [];
+    return getGoals(user.id);
+  }, [user, goalsVersion]);
 
   const loadGoals = () => {
-    if (!user) return;
-    const userGoals = getGoals(user.id);
-    setGoals(userGoals);
+    incrementGoalsVersion();
   };
 
-  const applyFiltersAndSort = () => {
+  // Derive filtered and sorted goals using useMemo instead of useEffect
+  const filteredGoals = useMemo(() => {
     let filtered = [...goals];
 
     // Apply filters
@@ -59,8 +54,8 @@ export function Goals() {
       return 0;
     });
 
-    setFilteredGoals(filtered);
-  };
+    return filtered;
+  }, [goals, filterStatus, filterPriority, sortBy]);
 
   const handleSaveGoal = (goal: Goal) => {
     saveGoal(goal);
