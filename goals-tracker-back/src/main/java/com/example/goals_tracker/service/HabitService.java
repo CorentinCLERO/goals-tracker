@@ -87,4 +87,16 @@ public class HabitService {
             .map(this::mapToResponse) 
             .toList();
     }
+    @Transactional
+    public void archiveHabit(UUID habitId, UUID userId) {
+        Habit habit = habitRepository.findById(habitId)
+            .orElseThrow(() -> new RuntimeException("Habitude non trouvée"));
+
+        if (!habit.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Accès refusé : ce n'est pas votre habitude");
+        }
+        habit.setIsArchived(true);
+    
+        habitRepository.save(habit);
+    }
 }

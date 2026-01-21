@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -69,4 +70,15 @@ public class HabitController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PatchMapping("/habits/{id}/archive")
+    public ResponseEntity<Void> archiveHabit(
+        @PathVariable UUID id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+        habitService.archiveHabit(id, userId);
+        System.out.println("Habitude archivée : " + id + " par l'utilisateur : " + userId);
+    
+        return ResponseEntity.noContent().build();
+        }
 }
