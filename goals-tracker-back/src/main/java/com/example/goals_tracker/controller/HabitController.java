@@ -31,4 +31,15 @@ public class HabitController {
         System.out.println("Requête de création d'habitude reçue !");
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @PutMapping("/habits/{id}")
+    public ResponseEntity<HabitResponse> updateHabit(
+        @PathVariable UUID id, 
+        @AuthenticationPrincipal UUID userId,
+        @Valid @RequestBody HabitRequest request) {
+    
+    HabitResponse response = habitService.updateHabit(id, userId, request);
+
+    return ResponseEntity.ok(response);
+}
 }
