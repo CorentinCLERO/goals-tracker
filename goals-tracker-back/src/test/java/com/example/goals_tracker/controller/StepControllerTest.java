@@ -35,7 +35,7 @@ class StepControllerTest {
         StepRequest request = StepRequest.builder()
                 .title("Test Step")
                 .deadline("2026-12-31T23:59:59")
-                .orderBy(1)
+                .position(1)
                 .isCompleted(false)
                 .build();
 
@@ -43,9 +43,8 @@ class StepControllerTest {
                 .id(UUID.randomUUID().toString())
                 .title("Test Step")
                 .deadline("2026-12-31T23:59:59")
-                .orderBy(1)
+                .position(1)
                 .isCompleted(false)
-                .goal(goalId.toString())
                 .completedAt(null)
                 .createdAt("2026-01-21T10:00:00")
                 .build();
@@ -59,7 +58,7 @@ class StepControllerTest {
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Test Step", response.getBody().getTitle());
-        assertEquals(1, response.getBody().getOrderBy());
+        assertEquals(1, response.getBody().getPosition());
         assertEquals(false, response.getBody().getIsCompleted());
         assertNull(response.getBody().getCompletedAt());
         assertNotNull(response.getBody().getId());
@@ -73,7 +72,7 @@ class StepControllerTest {
         StepRequest request = StepRequest.builder()
                 .title("Completed Step")
                 .deadline("2026-12-31T23:59:59")
-                .orderBy(2)
+                .position(2)
                 .isCompleted(true)
                 .build();
 
@@ -81,9 +80,8 @@ class StepControllerTest {
                 .id(UUID.randomUUID().toString())
                 .title("Completed Step")
                 .deadline("2026-12-31T23:59:59")
-                .orderBy(2)
+                .position(2)
                 .isCompleted(true)
-                .goal(goalId.toString())
                 .completedAt("2026-01-21T09:00:00")
                 .createdAt("2026-01-21T10:00:00")
                 .build();
@@ -97,7 +95,7 @@ class StepControllerTest {
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Completed Step", response.getBody().getTitle());
-        assertEquals(2, response.getBody().getOrderBy());
+        assertEquals(2, response.getBody().getPosition());
         assertEquals(true, response.getBody().getIsCompleted());
         assertNotNull(response.getBody().getCompletedAt());
         verify(stepService).createStep(request, goalId);
@@ -110,7 +108,7 @@ class StepControllerTest {
         StepRequest request = StepRequest.builder()
                 .title("Another Step")
                 .deadline("2026-06-15T12:30:00")
-                .orderBy(3)
+                .position(3)
                 .isCompleted(false)
                 .build();
 
@@ -118,9 +116,8 @@ class StepControllerTest {
                 .id(UUID.randomUUID().toString())
                 .title("Another Step")
                 .deadline("2026-06-15T12:30:00")
-                .orderBy(3)
+                .position(3)
                 .isCompleted(false)
-                .goal(goalId.toString())
                 .completedAt(null)
                 .createdAt("2026-01-21T10:00:00")
                 .build();
@@ -135,7 +132,7 @@ class StepControllerTest {
         assertNotNull(response.getBody());
         assertEquals("Another Step", response.getBody().getTitle());
         assertEquals("2026-06-15T12:30:00", response.getBody().getDeadline());
-        assertEquals(3, response.getBody().getOrderBy());
+        assertEquals(3, response.getBody().getPosition());
         verify(stepService).createStep(request, goalId);
     }
 }

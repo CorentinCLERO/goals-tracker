@@ -16,8 +16,8 @@ public class StepRequest {
   private String title;
   @NotBlank
   private String deadline;
-  @NotNull(message = "Order is required")
-  private Integer orderBy;
+  @NotNull(message = "Position is required")
+  private Integer position;
   private Boolean isCompleted;
   private String completedAt;
 }

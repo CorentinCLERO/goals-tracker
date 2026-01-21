@@ -16,8 +16,7 @@ public class StepResponse {
   private String title;
   private String deadline;
   private Boolean isCompleted;
-  private Integer orderBy;
-  private String goal;
+  private Integer position;
   private String completedAt;
   private String createdAt;
 
@@ -27,8 +26,7 @@ public class StepResponse {
               .title(step.getTitle())
               .deadline(step.getDeadline().toString())
               .isCompleted(step.getIsCompleted())
-              .orderBy(step.getOrderBy())
-              .goal(step.getGoal().toString())
+              .position(step.getPosition())
               .completedAt(step.getCompletedAt() != null ? step.getCompletedAt().toString() : null)
               .createdAt(step.getCreatedAt().toString())
               .build();

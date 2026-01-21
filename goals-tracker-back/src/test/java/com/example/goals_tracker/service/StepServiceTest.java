@@ -76,7 +76,7 @@ public class StepServiceTest {
         StepRequest request = StepRequest.builder()
                 .title("Test Step")
                 .deadline("2026-12-31T23:59:59")
-                .orderBy(1)
+                .position(1)
                 .isCompleted(false)
                 .build();
 
@@ -84,7 +84,7 @@ public class StepServiceTest {
                 .id(UUID.randomUUID())
                 .title("Test Step")
                 .deadline(LocalDateTime.parse("2026-12-31T23:59:59"))
-                .orderBy(1)
+                .position(1)
                 .isCompleted(false)
                 .goal(mockGoal)
                 .createdAt(LocalDateTime.now())
@@ -99,7 +99,7 @@ public class StepServiceTest {
         // then
         assertNotNull(actual);
         assertEquals("Test Step", actual.getTitle());
-        assertEquals(1, actual.getOrderBy());
+        assertEquals(1, actual.getPosition());
         assertEquals(false, actual.getIsCompleted());
         assertNull(actual.getCompletedAt());
         assertNotNull(actual.getId());
@@ -113,7 +113,7 @@ public class StepServiceTest {
         StepRequest request = StepRequest.builder()
                 .title("Test Step")
                 .deadline("2026-12-31T23:59:59")
-                .orderBy(1)
+                .position(1)
                 .isCompleted(false)
                 .build();
 
@@ -146,7 +146,7 @@ public class StepServiceTest {
         StepRequest request = StepRequest.builder()
                 .title("Test Step")
                 .deadline("2026-12-31T23:59:59")
-                .orderBy(1)
+                .position(1)
                 .isCompleted(false)
                 .build();
 
@@ -167,7 +167,7 @@ public class StepServiceTest {
         StepRequest request = StepRequest.builder()
                 .title("Completed Step")
                 .deadline("2026-12-31T23:59:59")
-                .orderBy(2)
+                .position(2)
                 .isCompleted(true)
                 .build();
 
@@ -176,7 +176,7 @@ public class StepServiceTest {
                 .id(UUID.randomUUID())
                 .title("Completed Step")
                 .deadline(LocalDateTime.parse("2026-12-31T23:59:59"))
-                .orderBy(2)
+                .position(2)
                 .isCompleted(true)
                 .goal(mockGoal)
                 .createdAt(LocalDateTime.now())
@@ -192,7 +192,7 @@ public class StepServiceTest {
         // then
         assertNotNull(actual);
         assertEquals("Completed Step", actual.getTitle());
-        assertEquals(2, actual.getOrderBy());
+        assertEquals(2, actual.getPosition());
         assertEquals(true, actual.getIsCompleted());
         assertNotNull(actual.getCompletedAt());
         verify(goalRepository).findById(goalId);

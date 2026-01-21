@@ -37,9 +37,8 @@ public class Step {
   @JoinColumn(nullable = false)
   private LocalDateTime deadline;
 
-  @Column(name = "order_by")
   @JoinColumn(nullable = false)
-  private Integer orderBy;
+  private Integer position;
 
   @Builder.Default
   @Column(name = "is_completed")

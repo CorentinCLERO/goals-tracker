@@ -1,6 +1,7 @@
 package com.example.goals_tracker.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,10 +35,18 @@ public class StepService {
       throw new RuntimeException("Unauthorized: Goal does not belong to user");
     }
 
+    // Get existing steps to determine next Position value
+    List<Step> existingSteps = stepRepository.findByGoalIdOrderByPositionAsc(goalId);
+    Integer nextPosition = existingSteps.stream()
+        .map(Step::getPosition)
+        .max(Integer::compareTo)
+        .map(max -> max + 1)
+        .orElse(1);
+
     Step step = Step.builder()
       .title(stepRequest.getTitle())
       .deadline(LocalDateTime.parse(stepRequest.getDeadline()))
-      .orderBy(stepRequest.getOrderBy())
+      .position(nextPosition)
       .isCompleted(stepRequest.getIsCompleted())
       .goal(goal)
       .build();
@@ -45,6 +54,23 @@ public class StepService {
     Step newStep = stepRepository.save(step);
 
     return StepResponse.from(newStep);
+  }
+
+  public List<StepResponse> listGoalSteps(UUID goalId) {
+    // Get the authenticated user ID from SecurityContext
+    UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+    Goal goal = goalRepository.findById(goalId)
+        .orElseThrow(() -> new RuntimeException("Goal not found"));
+
+    // Check if the goal belongs to the authenticated user
+    if (!goal.getUser().getId().equals(userId)) {
+      throw new RuntimeException("Unauthorized: Goal does not belong to user");
+    };
+
+    List<Step> steps = stepRepository.findByGoalIdOrderByPositionAsc(goalId);
+
+    return steps.stream().map(StepResponse::from).toList();
   }
 
 }
