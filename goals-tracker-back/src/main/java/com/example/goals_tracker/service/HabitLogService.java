@@ -1,18 +1,18 @@
 package com.example.goals_tracker.service;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
-import java.util.List;       
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.goals_tracker.dto.HabitLogResponse;
+import com.example.goals_tracker.dto.HabitStatsResponse;
 import com.example.goals_tracker.exception.BeanNotFoundException;
 import com.example.goals_tracker.model.Habit;
 import com.example.goals_tracker.model.HabitLog;
 import com.example.goals_tracker.repository.HabitLogRepository;
 import com.example.goals_tracker.repository.HabitRepository;
-import com.example.goals_tracker.dto.HabitStatsResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +22,7 @@ public class HabitLogService {
 
     private final HabitLogRepository habitLogRepository;
     private final HabitRepository habitRepository;
+    private final XpService xpService;
 
     @Transactional
     public HabitLogResponse logHabitToday(UUID habitId, UUID userId, String notes) {
@@ -37,6 +38,7 @@ public class HabitLogService {
         
         log.setIsCompleted(true);
         log.setNotes(notes);
+        xpService.addXpToUser(userId, XpService.XP_COMPLETE_HABIT);
         
         return mapToResponse(habitLogRepository.save(log));
     }

@@ -1,76 +1,35 @@
-import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/auth-context';
-import type { Goal, Habit, Stats } from '../types';
-import { getGoals, getHabits, getSteps, getHabitCompletions } from '../lib/storage';
-import { useGamification, useUserXp } from '../hooks/useGamification';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Target, CheckCircle2, Flame, TrendingUp, Star, Trophy, Loader2 } from 'lucide-react';
-import { calculateStreak, formatDate } from '../lib/utils-habit';
+import { useGamification } from '../hooks/useGamification';
+import { useDashboard } from '../hooks/useDashboard';
 
 export function Dashboard() {
   const { user } = useAuth();
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [stats, setStats] = useState<Stats>({
-    completedGoals: 0,
-    longestStreak: 0,
-    habitsCompletedToday: 0,
-    activeGoals: 0,
-    activeHabits: 0,
-  });
-  
-  const { userProgress, loading } = useGamification(user?.id || "");
-  const { xpData } = useUserXp(user?.id || "");
+  const { userProgress, loading: gamificationLoading } = useGamification(user?.id || "");
+  const { dashboardData, loading: dashboardLoading, error } = useDashboard();
 
-  const loadData = useCallback(() => {
-    if (!user) return;
+  const loading = gamificationLoading || dashboardLoading;
 
-    const userGoals = getGoals(user.id);
-    const userHabits = getHabits(user.id).filter(h => !h.archived);
-    
-    setGoals(userGoals);
-    setHabits(userHabits);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
-    // Calculate stats
-    const completedGoals = userGoals.filter(g => g.status === 'completed').length;
-    const activeGoals = userGoals.filter(g => g.status === 'active').length;
-    
-    let longestStreak = 0;
-    let habitsCompletedToday = 0;
-    const today = formatDate(new Date());
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-red-500">Erreur: {error}</p>
+      </div>
+    );
+  }
 
-    userHabits.forEach(habit => {
-      const completions = getHabitCompletions(habit.id);
-      const { bestStreak } = calculateStreak(completions);
-      longestStreak = Math.max(longestStreak, bestStreak);
-      
-      if (completions.some(c => c.date === today)) {
-        habitsCompletedToday++;
-      }
-    });
-
-    setStats({
-      completedGoals,
-      longestStreak,
-      habitsCompletedToday,
-      activeGoals,
-      activeHabits: userHabits.length,
-    });
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    loadData();
-  }, [user, loadData]);
-
-  const getGoalProgress = (goal: Goal): number => {
-    const steps = getSteps(goal.id);
-    if (steps.length === 0) return 0;
-    const completedSteps = steps.filter(s => s.status === 'completed').length;
-    return Math.round((completedSteps / steps.length) * 100);
-  };
+  const { stats, habitsToday, recentGoals } = dashboardData;
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -81,18 +40,19 @@ export function Dashboard() {
     }
   };
 
-  const ongoingGoals = goals.filter(g => g.status === 'active').slice(0, 5);
+  // Calculate progress percentage for next level
+  const currentLevelXp = userProgress.level === 1 ? 0 : 
+    userProgress.level === 2 ? 100 :
+    userProgress.level === 3 ? 300 :
+    userProgress.level === 4 ? 600 : 1000;
+  
+  const nextLevelXp = userProgress.level === 1 ? 100 :
+    userProgress.level === 2 ? 300 :
+    userProgress.level === 3 ? 600 :
+    userProgress.level === 4 ? 1000 : 1000;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  const progressPercent = xpData.nextLevelXp === xpData.currentLevelXp ? 100 : 
-    ((userProgress.xp - xpData.currentLevelXp) / (xpData.nextLevelXp - xpData.currentLevelXp)) * 100;
+  const progressPercent = nextLevelXp === currentLevelXp ? 100 : 
+    ((userProgress.xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100;
 
   return (
     <div className="space-y-6">
@@ -120,7 +80,7 @@ export function Dashboard() {
                   </Badge>
                 </CardTitle>
                 <CardDescription className="text-indigo-700">
-                  {userProgress.xp} XP • {xpData.xpNeededForNextLevel} XP to next level
+                  {userProgress.xp} XP • {nextLevelXp - userProgress.xp} XP to next level
                 </CardDescription>
               </div>
             </div>
@@ -143,33 +103,33 @@ export function Dashboard() {
             <Target className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">{stats.activeGoals}</div>
+            <div className="text-2xl">{stats.activeGoalsCount}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.completedGoals} completed
+              goals in progress
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Active Habits</CardTitle>
+            <CardTitle className="text-sm">Today's Habits</CardTitle>
             <CheckCircle2 className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">{stats.activeHabits}</div>
+            <div className="text-2xl">{stats.totalHabitsToday}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.habitsCompletedToday} completed today
+              {stats.habitsCompletedTodayCount} completed today
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Longest Streak</CardTitle>
+            <CardTitle className="text-sm">Global Streak</CardTitle>
             <Flame className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">{stats.longestStreak}</div>
+            <div className="text-2xl">{stats.currentGlobalStreak}</div>
             <p className="text-xs text-muted-foreground">
               days in a row
             </p>
@@ -183,8 +143,8 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl">
-              {stats.activeHabits > 0 
-                ? Math.round((stats.habitsCompletedToday / stats.activeHabits) * 100)
+              {stats.totalHabitsToday > 0 
+                ? Math.round((stats.habitsCompletedTodayCount / stats.totalHabitsToday) * 100)
                 : 0}%
             </div>
             <p className="text-xs text-muted-foreground">
@@ -194,45 +154,37 @@ export function Dashboard() {
         </Card>
       </div>
 
-      {/* Ongoing Goals */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Ongoing Goals</CardTitle>
-          <CardDescription>
-            Your active goals and their progress
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {ongoingGoals.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              No active goals. Create one to get started!
-            </p>
-          ) : (
+      {/* Recent Goals */}
+      {recentGoals.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Goals</CardTitle>
+            <CardDescription>
+              Your recent goals and their progress
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
-              {ongoingGoals.map(goal => {
-                const progress = getGoalProgress(goal);
-                return (
-                  <div key={goal.id} className="space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{goal.title}</h4>
-                          <Badge variant="outline" className={`${getPriorityColor(goal.priority)} text-white border-0`}>
-                            {goal.priority}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{goal.category}</p>
+              {recentGoals.map((goal, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{goal.title}</h4>
+                        <Badge variant="outline" className={`${getPriorityColor(goal.priority)} text-white border-0`}>
+                          {goal.priority}
+                        </Badge>
                       </div>
-                      <span className="text-sm">{progress}%</span>
                     </div>
-                    <Progress value={progress} className="h-2" />
+                    <span className="text-sm">{goal.progressPercentage}%</span>
                   </div>
-                );
-              })}
+                  <Progress value={goal.progressPercentage} className="h-2" />
+                </div>
+              ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Today's Habits */}
       <Card>
@@ -243,44 +195,37 @@ export function Dashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {habits.length === 0 ? (
+          {habitsToday.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
               No habits yet. Create one to build your routine!
             </p>
           ) : (
             <div className="space-y-3">
-              {habits.slice(0, 5).map(habit => {
-                const completions = getHabitCompletions(habit.id);
-                const today = formatDate(new Date());
-                const isCompletedToday = completions.some(c => c.date === today);
-                const { currentStreak } = calculateStreak(completions);
-
-                return (
-                  <div key={habit.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className={`size-10 rounded-full flex items-center justify-center ${
-                        isCompletedToday ? 'bg-green-100' : 'bg-gray-100'
-                      }`}>
-                        <CheckCircle2 className={`size-5 ${
-                          isCompletedToday ? 'text-green-600' : 'text-gray-400'
-                        }`} />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{habit.name}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          {habit.frequency === 'daily' ? 'Daily' : `${habit.weeklyTarget}x per week`}
-                        </p>
-                      </div>
+              {habitsToday.map((habit, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className={`size-10 rounded-full flex items-center justify-center ${
+                      habit.completedToday ? 'bg-green-100' : 'bg-gray-100'
+                    }`}>
+                      <CheckCircle2 className={`size-5 ${
+                        habit.completedToday ? 'text-green-600' : 'text-gray-400'
+                      }`} />
                     </div>
-                    {currentStreak > 0 && (
-                      <div className="flex items-center gap-1 text-orange-600">
-                        <Flame className="size-4" />
-                        <span className="text-sm">{currentStreak}</span>
-                      </div>
-                    )}
+                    <div>
+                      <h4 className="font-medium">{habit.name}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {habit.completedToday ? 'Completed today' : 'Not completed yet'}
+                      </p>
+                    </div>
                   </div>
-                );
-              })}
+                  {habit.currentStreak > 0 && (
+                    <div className="flex items-center gap-1 text-orange-600">
+                      <Flame className="size-4" />
+                      <span className="text-sm">{habit.currentStreak}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
