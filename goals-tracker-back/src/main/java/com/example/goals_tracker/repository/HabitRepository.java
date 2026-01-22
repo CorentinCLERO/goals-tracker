@@ -12,4 +12,5 @@ import com.example.goals_tracker.model.Habit;
 public interface HabitRepository extends JpaRepository<Habit, UUID> {
     
     List<Habit> findAllByUserId(UUID userId);
+    List<Habit> findAllByUserIdAndIsArchivedFalse(UUID userId);
 }
