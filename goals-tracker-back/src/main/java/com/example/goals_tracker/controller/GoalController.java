@@ -2,6 +2,7 @@ package com.example.goals_tracker.controller;
 
 import com.example.goals_tracker.dto.GoalRequest;
 import com.example.goals_tracker.dto.GoalResponse;
+import com.example.goals_tracker.dto.GoalProgressResponse;
 import com.example.goals_tracker.dto.GoalsQueryParams;
 import com.example.goals_tracker.service.GoalService;
 import jakarta.validation.Valid;
@@ -102,5 +103,16 @@ public class GoalController {
         goalService.deleteGoal(id, userId);
         log.info("Goal deleted successfully with ID: {}", id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/progress")
+    public ResponseEntity<GoalProgressResponse> getGoalProgress(@PathVariable("id") UUID id) {
+        log.info("Calculating progress for goal with ID: {}", id);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+
+        GoalProgressResponse progress = goalService.calculateGoalProgress(id, userId);
+        log.info("Goal progress calculated successfully: {}% for goal ID: {}", progress.getProgress(), id);
+        return ResponseEntity.ok(progress);
     }
 }

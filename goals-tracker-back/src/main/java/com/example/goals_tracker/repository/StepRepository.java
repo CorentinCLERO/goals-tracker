@@ -10,4 +10,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface StepRepository extends JpaRepository<Step, UUID> {
   List<Step> findByGoalIdOrderByPositionAsc(UUID goalId);
+  
+  long countByGoalId(UUID goalId);
+  
+  long countByGoalIdAndIsCompletedTrue(UUID goalId);
 }
