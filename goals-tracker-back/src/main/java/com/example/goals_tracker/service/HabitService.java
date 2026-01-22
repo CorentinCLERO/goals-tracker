@@ -111,4 +111,16 @@ public class HabitService {
         }
         habitRepository.delete(habit);
     }
+
+    @Transactional(readOnly = true)
+    public HabitResponse getHabitById(UUID habitId, UUID userId) {
+        Habit habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new BeanNotFoundException("Habitude non trouvée avec l'id : " + habitId));
+
+        if (!habit.getUser().getId().equals(userId)) {
+            throw new BeanNotFoundException("Accès refusé : vous n'avez pas les droits sur cette habitude");
+        }
+
+        return mapToResponse(habit);
+    }
 }

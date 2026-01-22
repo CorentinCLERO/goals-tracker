@@ -92,6 +92,16 @@ public class HabitController {
         habitService.deleteHabit(id, userId);
         System.out.println("Habitude supprimée : " + id + " par l'utilisateur : " + userId);
     
-        return ResponseEntity.noContent().build(); // Réponse 204 : succès sans corps de message
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/habits/{id}")
+    public ResponseEntity<HabitResponse> getHabitById(
+        @PathVariable UUID id) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+        HabitResponse response = habitService.getHabitById(id, userId);
+        return ResponseEntity.ok(response);
     }
 }
