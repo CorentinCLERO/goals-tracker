@@ -56,11 +56,17 @@ export $(cat .env | grep -v "#" | xargs)
 ./mvnw spring-boot:run
 ```
 
-### Avec Docker
+### Lancement avec docker-compose
 
 ```bash
-# Lancement avec docker-compose
-docker-compose up --build
+docker compose up --build goals-tracker-backend
+```
+
+Cette commande va lancer uniquement le service backend (et ses dépendances, comme la base de données) en utilisant la configuration du fichier `docker-compose.yml`.  
+Pour lancer tous les services (backend, frontend, base de données), utilisez simplement :
+
+```bash
+docker compose up --build
 ```
 
 L'application sera accessible sur `http://localhost:8080`
