@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.goals_tracker.dto.DashboardResponse;
 import com.example.goals_tracker.service.StatsService;
+import com.example.goals_tracker.dto.GlobalStatsResponse;
 
 import lombok.RequiredArgsConstructor;
 @RestController
@@ -25,5 +26,13 @@ public class StatsController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UUID userId = (UUID) auth.getPrincipal();
         return ResponseEntity.ok(statsService.getDashboardData(userId));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<GlobalStatsResponse> getGlobalStats() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+
+        return ResponseEntity.ok(statsService.getGlobalStats(userId));
     }
 }
