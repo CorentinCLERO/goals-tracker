@@ -77,7 +77,7 @@ public class UserService {
     @Transactional
     public UserResponse updateUser(UUID userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BeanNotFoundException("User not found"));
         
         // Check if email is being changed and if it already exists
         if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
