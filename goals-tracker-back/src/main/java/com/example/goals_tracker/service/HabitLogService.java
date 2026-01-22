@@ -48,8 +48,21 @@ public class HabitLogService {
 
     @Transactional(readOnly = true)
     public List<HabitLogResponse> getLogs(UUID habitId, UUID userId, LocalDate start, LocalDate end) {
+        Habit habit = habitRepository.findById(habitId).orElseThrow(() -> new BeanNotFoundException("Habitude non trouvée"));
+
+        if (!habit.getUser().getId().equals(userId)) throw new BeanNotFoundException("Accès refusé");
+        
         return habitLogRepository.findAllByHabitIdAndDateBetweenOrderByDateDesc(habitId, start, end)
                 .stream().map(this::mapToResponse).toList();
+    }
+
+    @Transactional
+    public void deleteLogByDate(UUID habitId, UUID userId, LocalDate date) {
+        Habit habit = habitRepository.findById(habitId).orElseThrow(() -> new BeanNotFoundException("Habitude non trouvée"));
+
+        if (!habit.getUser().getId().equals(userId)) throw new BeanNotFoundException("Accès refusé");
+
+        habitLogRepository.deleteByHabitIdAndDate(habitId, date);
     }
 
    
