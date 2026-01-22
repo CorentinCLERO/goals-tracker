@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/auth-context";
+import { useNavigate, useLocation } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -20,18 +21,30 @@ import { Target } from "lucide-react";
 import { toast } from "sonner";
 
 export function Auth() {
-  const { login, register } = useAuth();
+  const { user, login, register } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerName, setRegisterName] = useState("");
 
+  useEffect(() => {
+    if (user) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location.state]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await login(loginEmail, loginPassword);
     if (result.success) {
       toast.success("Bienvenue !");
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     } else {
       toast.error(result.error || "Erreur lors de la connexion.");
     }
@@ -50,6 +63,7 @@ export function Auth() {
     );
     if (result.success) {
       toast.success("Compte créé avec succès !");
+      navigate('/dashboard', { replace: true });
     } else {
       toast.error(result.error || "Erreur lors de l'inscription.");
     }

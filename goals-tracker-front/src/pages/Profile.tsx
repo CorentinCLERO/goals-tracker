@@ -11,9 +11,9 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { User, Save, Trophy } from "lucide-react";
+import { User, Save, Trophy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { getUserProgress, BADGES } from "../lib/gamification";
+import { useGamification } from "../hooks/useGamification";
 
 export function Profile() {
   const { user, updateProfile } = useAuth();
@@ -22,12 +22,7 @@ export function Profile() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const userProgress = user
-    ? getUserProgress(user.id)
-    : { xp: 0, level: 1, badges: [] };
-  const unlockedBadgeIds = new Set(
-    userProgress.badges.map((b: { badgeId: string }) => b.badgeId),
-  );
+  const { userProgress, availableBadges, loading } = useGamification(user?.id || "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,35 +91,26 @@ export function Profile() {
               </Badge>
             </div>
 
-            {unlockedBadgeIds.size > 0 && (
+            {unlockedBadges.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {BADGES.filter((b: { id: string }) =>
-                  unlockedBadgeIds.has(b.id),
-                ).map(
-                  (badge: {
-                    id: string;
-                    icon: string;
-                    name: string;
-                    description: string;
-                  }) => (
-                    <div
-                      key={badge.id}
-                      className="flex items-center gap-2 px-3 py-2 bg-white border-2 border-yellow-400 rounded-lg"
-                    >
-                      <span className="text-2xl">{badge.icon}</span>
-                      <div>
-                        <div className="text-sm font-medium">{badge.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {badge.description}
-                        </div>
+                {unlockedBadges.map((badge) => (
+                  <div
+                    key={badge.id}
+                    className="flex items-center gap-2 px-3 py-2 bg-white border-2 border-yellow-400 rounded-lg"
+                  >
+                    <span className="text-2xl">{badge.icon}</span>
+                    <div>
+                      <div className="text-sm font-medium">{badge.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {badge.description}
                       </div>
                     </div>
-                  ),
-                )}
+                  </div>
+                ))}
               </div>
             )}
 
-            {unlockedBadgeIds.size === 0 && (
+            {unlockedBadges.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
                 Complete goals and maintain streaks to unlock badges!
               </p>

@@ -8,12 +8,16 @@ import com.example.goals_tracker.dto.UserResponse;
 import com.example.goals_tracker.model.User;
 import com.example.goals_tracker.repository.UserRepository;
 import com.example.goals_tracker.exception.EmailAlreadyExistsException;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+
+import com.example.goals_tracker.exception.BeanNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -79,7 +83,6 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BeanNotFoundException("User not found"));
         
-        // Check if email is being changed and if it already exists
         if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Email already exists: " + request.getEmail());
         }
