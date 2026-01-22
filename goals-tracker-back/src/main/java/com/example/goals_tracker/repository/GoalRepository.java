@@ -35,4 +35,5 @@ public interface GoalRepository extends JpaRepository<Goal, UUID> {
             @Param("sortDirection") String sortDirection);
 
     Optional<Goal> findByIdAndUserId(UUID id, UUID userId);
+    long countByUserIdAndStatus(UUID userId, StatusEnum status);
 }
