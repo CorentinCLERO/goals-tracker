@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { Goal, Step } from '../types';
-import { getSteps, saveStep, deleteStep } from '../lib/storage';
-import { addXp, XP_REWARDS } from '../lib/gamification';
-import { useAuth } from '../contexts/auth-context';
+import { useState } from 'react';
+import type { Goal } from '../types';
+import { useSteps } from '../hooks/useSteps';
+import { useGoalProgress } from '../hooks/useGoals';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -19,83 +18,78 @@ interface GoalDetailProps {
   onOpenChange: (open: boolean) => void;
   goal: Goal;
   onUpdate: () => void;
+  onProgressUpdate?: () => void;
   onDelete: () => void;
   onEdit: () => void;
 }
 
-export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdit }: GoalDetailProps) {
-  const { user } = useAuth();
-  const [steps, setSteps] = useState<Step[]>([]);
+export function GoalDetail({ open, onOpenChange, goal, onProgressUpdate, onDelete, onEdit }: GoalDetailProps) {
   const [newStepTitle, setNewStepTitle] = useState('');
   const [newStepDueDate, setNewStepDueDate] = useState('');
 
-  const loadSteps = useCallback(() => {
-    if (!goal) return;
-    const goalSteps = getSteps(goal.id);
-    setSteps(goalSteps);
-  }, [goal]);
+  const {
+    steps,
+    loading: stepsLoading,
+    error: stepsError,
+    createStep,
+    toggleStepCompletion,
+    deleteStep,
+  } = useSteps(goal.id);
 
-  useEffect(() => {
-    if (open && goal) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      loadSteps();
-    }
-  }, [open, goal, loadSteps]);
+  const {
+    progress,
+    loading: progressLoading,
+    refetch: refetchProgress,
+  } = useGoalProgress(goal.id);
 
-  const handleAddStep = (e: React.FormEvent) => {
+  const handleAddStep = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStepTitle.trim()) return;
 
-    const newStep: Step = {
-      id: crypto.randomUUID(),
-      goalId: goal.id,
-      title: newStepTitle,
-      dueDate: newStepDueDate || undefined,
-      status: 'todo',
-      createdAt: new Date().toISOString(),
-    };
-
-    saveStep(newStep);
-    loadSteps();
-    setNewStepTitle('');
-    setNewStepDueDate('');
-    toast.success('Step added!');
-  };
-
-  const handleToggleStep = (step: Step) => {
-    const updatedStep: Step = {
-      ...step,
-      status: step.status === 'completed' ? 'todo' : 'completed',
-    };
-    saveStep(updatedStep);
-    
-    // Award XP when completing a step
-    if (updatedStep.status === 'completed' && user) {
-      const { leveledUp, newLevel } = addXp(user.id, XP_REWARDS.COMPLETE_STEP);
-      toast.success(`Step completed! +${XP_REWARDS.COMPLETE_STEP} XP`);
+    try {
+      await createStep({
+        goalId: goal.id,
+        title: newStepTitle,
+        dueDate: newStepDueDate || undefined,
+        status: 'todo',
+      });
       
-      if (leveledUp) {
-        toast.success(`🎉 Level Up! You're now level ${newLevel}!`, {
-          duration: 5000,
-        });
-      }
+      setNewStepTitle('');
+      setNewStepDueDate('');
+      toast.success('Step added!');
+      refetchProgress();
+      onProgressUpdate?.();
+    } catch (error) {
+      console.error('Error adding step:', error);
+      toast.error('Failed to add step');
     }
+  };
+
+  const handleToggleStep = async (stepId: string, currentStatus: string) => {
+    const isCompleted = currentStatus === 'completed';
     
-    loadSteps();
-    onUpdate();
+    try {
+      await toggleStepCompletion(stepId, !isCompleted);
+      toast.success(`Step marked as ${isCompleted ? 'incomplete' : 'completed'}!`);
+      
+      refetchProgress();
+      onProgressUpdate?.();
+    } catch (error) {
+      console.error('Error toggling step:', error);
+      toast.error('Failed to update step');
+    }
   };
 
-  const handleDeleteStep = (stepId: string) => {
-    deleteStep(stepId);
-    loadSteps();
-    onUpdate();
-    toast.success('Step deleted!');
-  };
-
-  const getProgress = (): number => {
-    if (steps.length === 0) return 0;
-    const completedSteps = steps.filter(s => s.status === 'completed').length;
-    return Math.round((completedSteps / steps.length) * 100);
+  const handleDeleteStep = async (stepId: string) => {
+    try {
+      await deleteStep(stepId);
+      toast.success('Step deleted!');
+      refetchProgress();
+      onProgressUpdate?.();
+    } catch (error) {
+      console.error('Error deleting step:', error);
+      toast.error('Failed to delete step');
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -110,7 +104,7 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'ACTIVE': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'abandoned': return 'bg-gray-100 text-gray-800 border-gray-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -118,7 +112,7 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
 
   const formatStatus = (status: string) => {
     switch (status) {
-      case 'in_progress': return 'In Progress';
+      case 'ACTIVE': return 'Active';
       case 'completed': return 'Completed';
       case 'abandoned': return 'Abandoned';
       default: return status;
@@ -171,9 +165,11 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>{steps.filter(s => s.status === 'completed').length} of {steps.length} steps completed</span>
-                  <span>{getProgress()}%</span>
+                  <span>
+                    {progressLoading ? 'Loading...' : `${progress}%`}
+                  </span>
                 </div>
-                <Progress value={getProgress()} className="h-2" />
+                <Progress value={progressLoading ? 0 : progress} className="h-2" />
               </div>
             </CardContent>
           </Card>
@@ -214,45 +210,54 @@ export function GoalDetail({ open, onOpenChange, goal, onUpdate, onDelete, onEdi
 
               {/* Steps List */}
               <div className="space-y-2">
-                {steps.length === 0 ? (
+                {stepsLoading && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Loading steps...
+                  </p>
+                )}
+                {stepsError && (
+                  <p className="text-sm text-destructive text-center py-4">
+                    Error loading steps: {stepsError}
+                  </p>
+                )}
+                {!stepsLoading && !stepsError && steps.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     No steps yet. Add steps to break down your goal.
                   </p>
-                ) : (
-                  steps.map(step => (
-                    <div
-                      key={step.id}
-                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-                    >
-                      <Checkbox
-                        checked={step.status === 'completed'}
-                        onCheckedChange={() => handleToggleStep(step)}
-                        id={`step-${step.id}`}
-                      />
-                      <label
-                        htmlFor={`step-${step.id}`}
-                        className={`flex-1 cursor-pointer ${
-                          step.status === 'completed' ? 'line-through text-muted-foreground' : ''
-                        }`}
-                      >
-                        {step.title}
-                      </label>
-                      {step.dueDate && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Calendar className="size-3" />
-                          {new Date(step.dueDate).toLocaleDateString()}
-                        </div>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteStep(step.id)}
-                      >
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))
                 )}
+                {!stepsLoading && !stepsError && steps.map(step => (
+                  <div
+                    key={step.id}
+                    className="flex items-center gap-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                  >
+                    <Checkbox
+                      checked={step.status === 'completed'}
+                      onCheckedChange={() => handleToggleStep(step.id, step.status)}
+                      id={`step-${step.id}`}
+                    />
+                    <label
+                      htmlFor={`step-${step.id}`}
+                      className={`flex-1 cursor-pointer ${
+                        step.status === 'completed' ? 'line-through text-muted-foreground' : ''
+                      }`}
+                    >
+                      {step.title}
+                    </label>
+                    {step.dueDate && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Calendar className="size-3" />
+                        {new Date(step.dueDate).toLocaleDateString()}
+                      </div>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteStep(step.id)}
+                    >
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
