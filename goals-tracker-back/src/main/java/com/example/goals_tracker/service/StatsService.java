@@ -17,6 +17,7 @@ import com.example.goals_tracker.repository.GoalRepository;
 import com.example.goals_tracker.repository.HabitLogRepository;
 import com.example.goals_tracker.repository.HabitRepository;
 import com.example.goals_tracker.dto.GlobalStatsResponse;
+import com.example.goals_tracker.dto.HabitStatsResponse;
 import com.example.goals_tracker.model.Goal;
 
 import lombok.RequiredArgsConstructor;
@@ -121,6 +122,24 @@ public class StatsService {
                         Goal::getCategory, 
                         Collectors.counting()
                 ));
+    }
+
+    public List<HabitStatsResponse> getHabitStats(UUID userId) {
+        return habitRepository.findAllByUserIdAndIsArchivedFalse(userId).stream()
+                .map(habit -> {
+                    List<HabitLog> logs = habitLogRepository.findAllByHabitIdOrderByDateDesc(habit.getId());
+                    
+                    long totalCompleted = logs.stream().filter(HabitLog::getIsCompleted).count();
+                    double rate = logs.isEmpty() ? 0.0 : (double) totalCompleted / logs.size() * 100.0;
+
+                    return HabitStatsResponse.builder()
+                            .habitName(habit.getName())
+                            .currentStreak(calculateStreak(logs))
+                            .longestStreak(calculateLongestStreak(logs))
+                            .totalCompleted(totalCompleted)
+                            .completionRate(Math.round(rate * 10.0) / 10.0) 
+                            .build();
+                }).toList();
     }
     
 }

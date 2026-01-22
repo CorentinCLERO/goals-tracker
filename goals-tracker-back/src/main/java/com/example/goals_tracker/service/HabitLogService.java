@@ -84,9 +84,13 @@ public class HabitLogService {
 
     @Transactional(readOnly = true)
     public HabitStatsResponse getStats(UUID habitId, UUID userId) {
+        Habit habit = habitRepository.findById(habitId)
+            .orElseThrow(() -> new BeanNotFoundException("Habit not found"));
+
         List<HabitLog> allLogs = habitLogRepository.findAllByHabitIdOrderByDateDesc(habitId);
         
         return HabitStatsResponse.builder()
+                .habitName(habit.getName())
                 .currentStreak(calculateStreak(allLogs))
                 .longestStreak(calculateLongestStreak(allLogs))
                 .completionRate(calculateCompletionRate(allLogs, habitId))
