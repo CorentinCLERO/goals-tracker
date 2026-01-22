@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 @Builder
 public class HabitStatsResponse {
+    private String habitName; 
     private int currentStreak;
     private final double completionRate;
     private int longestStreak;
