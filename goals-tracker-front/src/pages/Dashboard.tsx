@@ -35,7 +35,7 @@ export function Dashboard() {
 
     // Calculate stats
     const completedGoals = userGoals.filter(g => g.status === 'completed').length;
-    const activeGoals = userGoals.filter(g => g.status === 'in_progress').length;
+    const activeGoals = userGoals.filter(g => g.status === 'ACTIVE').length;
     
     let longestStreak = 0;
     let habitsCompletedToday = 0;
@@ -81,7 +81,7 @@ export function Dashboard() {
     }
   };
 
-  const ongoingGoals = goals.filter(g => g.status === 'in_progress').slice(0, 5);
+  const ongoingGoals = goals.filter(g => g.status === 'ACTIVE').slice(0, 5);
   const nextLevelXp = getXpForNextLevel(userProgress.level);
   const progressPercent = getXpProgress(userProgress.xp, userProgress.level);
 
