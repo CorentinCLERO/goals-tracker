@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.goals_tracker.dto.HabitRequest;
 import com.example.goals_tracker.dto.HabitResponse;
+import com.example.goals_tracker.exception.BeanNotFoundException;
 import com.example.goals_tracker.model.Habit;
 import com.example.goals_tracker.model.User;
 import com.example.goals_tracker.repository.HabitRepository;
@@ -24,7 +25,7 @@ public class HabitService {
     @Transactional
     public HabitResponse createHabit(UUID userId, HabitRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new  BeanNotFoundException("User not found with id: " + userId));
 
         Habit habit = Habit.builder()
                 .name(request.getName())
@@ -58,10 +59,10 @@ public class HabitService {
     @Transactional
     public HabitResponse updateHabit(UUID habitId, UUID userId, HabitRequest request) {
         Habit habit = habitRepository.findById(habitId)
-                .orElseThrow(() -> new RuntimeException("Habitude non trouvée"));
+                .orElseThrow(() -> new  BeanNotFoundException("Habitude non trouvée"));
 
         if (!habit.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Vous n'avez pas l'autorisation de modifier cette habitude");
+            throw new BeanNotFoundException("Vous n'avez pas l'autorisation de modifier cette habitude");
         }
 
         habit.setName(request.getName());
@@ -90,13 +91,24 @@ public class HabitService {
     @Transactional
     public void archiveHabit(UUID habitId, UUID userId) {
         Habit habit = habitRepository.findById(habitId)
-            .orElseThrow(() -> new RuntimeException("Habitude non trouvée"));
+            .orElseThrow(() -> new  BeanNotFoundException("Habitude non trouvée"));
 
         if (!habit.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Accès refusé : ce n'est pas votre habitude");
+            throw new  BeanNotFoundException("Accès refusé : ce n'est pas votre habitude");
         }
         habit.setIsArchived(true);
     
         habitRepository.save(habit);
+    }
+
+    @Transactional
+    public void deleteHabit(UUID habitId, UUID userId) {
+        Habit habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new  BeanNotFoundException("Habitude non trouvée"));
+
+        if (!habit.getUser().getId().equals(userId)) {
+            throw new  BeanNotFoundException("Accès refusé : vous ne pouvez pas supprimer cette habitude");
+        }
+        habitRepository.delete(habit);
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -81,4 +82,16 @@ public class HabitController {
     
         return ResponseEntity.noContent().build();
         }
+
+    @DeleteMapping("/habits/{id}")
+    public ResponseEntity<Void> deleteHabit(
+        @PathVariable UUID id) {
+    
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+        habitService.deleteHabit(id, userId);
+        System.out.println("Habitude supprimée : " + id + " par l'utilisateur : " + userId);
+    
+        return ResponseEntity.noContent().build(); // Réponse 204 : succès sans corps de message
+    }
 }
