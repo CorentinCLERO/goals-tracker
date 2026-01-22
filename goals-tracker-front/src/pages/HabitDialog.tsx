@@ -20,7 +20,7 @@ export function HabitDialog({ open, onOpenChange, habit, onSave }: HabitDialogPr
   const { user } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [frequency, setFrequency] = useState<Frequency>('daily');
+  const [frequency, setFrequency] = useState<Frequency>('DAILY');
   const [weeklyTarget, setWeeklyTarget] = useState(3);
   const [category, setCategory] = useState('Health');
   const [startDate, setStartDate] = useState('');
@@ -28,7 +28,7 @@ export function HabitDialog({ open, onOpenChange, habit, onSave }: HabitDialogPr
   const resetForm = useCallback(() => {
     setName('');
     setDescription('');
-    setFrequency('daily');
+    setFrequency('DAILY');
     setWeeklyTarget(3);
     setCategory('Health');
     setStartDate(new Date().toISOString().split('T')[0]);
@@ -53,15 +53,15 @@ export function HabitDialog({ open, onOpenChange, habit, onSave }: HabitDialogPr
     if (!user) return;
 
     const habitData: Habit = {
-      id: habit?.id || crypto.randomUUID(),
+      id: habit?.id ?? '',
       userId: user.id,
       name,
       description: description || undefined,
       frequency,
-      weeklyTarget: frequency === 'weekly' ? weeklyTarget : undefined,
+      weeklyTarget: frequency === 'WEEKLY' ? weeklyTarget : undefined,
       category,
       startDate,
-      archived: habit?.archived || false,
+      isArchived: habit?.isArchived || false,
       createdAt: habit?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -106,17 +106,17 @@ export function HabitDialog({ open, onOpenChange, habit, onSave }: HabitDialogPr
             <Label>Frequency *</Label>
             <RadioGroup value={frequency} onValueChange={(value: string) => setFrequency(value as Frequency)}>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="daily" id="daily" />
-                <Label htmlFor="daily" className="cursor-pointer">Daily</Label>
+                <RadioGroupItem value="DAILY" id="DAILY" />
+                <Label htmlFor="DAILY" className="cursor-pointer">Daily</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="weekly" id="weekly" />
-                <Label htmlFor="weekly" className="cursor-pointer">Weekly</Label>
+                <RadioGroupItem value="WEEKLY" id="WEEKLY" />
+                <Label htmlFor="WEEKLY" className="cursor-pointer">Weekly</Label>
               </div>
             </RadioGroup>
           </div>
 
-          {frequency === 'weekly' && (
+          {frequency === 'WEEKLY' && (
             <div className="space-y-2">
               <Label htmlFor="weeklyTarget">Times per week *</Label>
               <Input

@@ -1,7 +1,15 @@
 export type Priority = "low" | "medium" | "high";
 export type GoalStatus = "active" | "completed" | "abandoned";
 export type StepStatus = "todo" | "completed";
-export type Frequency = "daily" | "weekly";
+export type Frequency = "DAILY" | "WEEKLY";
+export type BadgeType =
+  | "finisher"
+  | "commitment"
+  | "streak_master"
+  | "habit_builder"
+  | "early_bird"
+  | "consistent";
+
 export interface User {
   id: string;
   email: string;
@@ -41,7 +49,7 @@ export interface Habit {
   weeklyTarget?: number; // For weekly frequency
   category: string;
   startDate: string;
-  archived: boolean;
+  isArchived: boolean;
   createdAt: string;
   updatedAt: string;
 }

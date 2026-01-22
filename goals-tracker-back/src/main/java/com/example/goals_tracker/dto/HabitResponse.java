@@ -18,6 +18,8 @@ public class HabitResponse {
     private String name;
     private String description;
     private Frequency frequency;
+    private Integer weeklyTarget;
+    private String category;
     private Integer xpPoints;
     private LocalDate startDate;
     private Boolean isArchived;

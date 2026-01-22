@@ -1,4 +1,6 @@
 import type { User, Goal, Step, Habit, HabitCompletion } from '../types';
+import { habitsApiClient } from './habitsApi';
+import { toast } from 'sonner';
 
 // LocalStorage keys
 const KEYS = {
@@ -103,51 +105,92 @@ export function deleteStep(stepId: string): void {
   saveToStorage(KEYS.STEPS, steps.filter(s => s.id !== stepId));
 }
 
-// Habit functions
-export function getHabits(userId: string): Habit[] {
-  return getFromStorage<Habit>(KEYS.HABITS).filter(h => h.userId === userId);
-}
-
-export function saveHabit(habit: Habit): void {
-  const habits = getFromStorage<Habit>(KEYS.HABITS);
-  const existingIndex = habits.findIndex(h => h.id === habit.id);
-  if (existingIndex >= 0) {
-    habits[existingIndex] = habit;
-  } else {
-    habits.push(habit);
+// Habit functions - Using API calls
+export async function getHabits(): Promise<Habit[]> {
+  try {
+    return await habitsApiClient.getHabits();
+  } catch (error) {
+    console.error('Failed to get habits:', error);
+    toast.error(error instanceof Error ? error.message : 'Failed to load habits');
+    return [];
   }
-  saveToStorage(KEYS.HABITS, habits);
 }
 
-export function deleteHabit(habitId: string): void {
-  const habits = getFromStorage<Habit>(KEYS.HABITS);
-  saveToStorage(KEYS.HABITS, habits.filter(h => h.id !== habitId));
-  
-  // Also delete associated completions
-  const completions = getFromStorage<HabitCompletion>(KEYS.COMPLETIONS);
-  saveToStorage(KEYS.COMPLETIONS, completions.filter(c => c.habitId !== habitId));
+export async function saveHabit(habit: Partial<Habit>): Promise<Habit | null> {
+  try {
+    // Check if it's an update (has a valid UUID-like ID)
+    if (habit.id && habit.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      // Update existing habit
+      return await habitsApiClient.updateHabit(habit.id, habit as Habit);
+    } else {
+      // Create new habit - strip out client-generated fields
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, userId, createdAt, updatedAt, ...habitData } = habit as Habit;
+      return await habitsApiClient.createHabit(habitData);
+    }
+  } catch (error) {
+    console.error('Failed to save habit:', error);
+    toast.error(error instanceof Error ? error.message : 'Failed to save habit');
+    throw error;
+  }
 }
 
-// Habit completion functions
-export function getHabitCompletions(habitId: string): HabitCompletion[] {
-  return getFromStorage<HabitCompletion>(KEYS.COMPLETIONS).filter(c => c.habitId === habitId);
+export async function deleteHabit(habitId: string): Promise<void> {
+  try {
+    await habitsApiClient.deleteHabit(habitId);
+  } catch (error) {
+    console.error('Failed to delete habit:', error);
+    toast.error(error instanceof Error ? error.message : 'Failed to delete habit');
+    throw error;
+  }
 }
 
-export function saveHabitCompletion(completion: HabitCompletion): void {
-  const completions = getFromStorage<HabitCompletion>(KEYS.COMPLETIONS);
-  completions.push(completion);
-  saveToStorage(KEYS.COMPLETIONS, completions);
+export async function archiveHabit(habitId: string): Promise<Habit> {
+  try {
+    return await habitsApiClient.archiveHabit(habitId);
+  } catch (error) {
+    console.error('Failed to archive habit:', error);
+    toast.error(error instanceof Error ? error.message : 'Failed to archive habit');
+    throw error;
+  }
 }
 
-export function deleteHabitCompletion(habitId: string, date: string): void {
-  const completions = getFromStorage<HabitCompletion>(KEYS.COMPLETIONS);
-  saveToStorage(
-    KEYS.COMPLETIONS,
-    completions.filter(c => !(c.habitId === habitId && c.date === date))
-  );
+// Habit completion functions - Using API calls
+export async function getHabitCompletions(habitId: string): Promise<HabitCompletion[]> {
+  try {
+    return await habitsApiClient.getHabitCompletions(habitId);
+  } catch (error) {
+    console.error('Failed to get habit completions:', error);
+    toast.error(error instanceof Error ? error.message : 'Failed to load completions');
+    return [];
+  }
 }
 
-export function isHabitCompletedOnDate(habitId: string, date: string): boolean {
-  const completions = getHabitCompletions(habitId);
-  return completions.some(c => c.date === date);
+export async function saveHabitCompletion(completion: HabitCompletion): Promise<HabitCompletion | null> {
+  try {
+    return await habitsApiClient.logHabitCompletion(completion.habitId, completion.date);
+  } catch (error) {
+    console.error('Failed to save habit completion:', error);
+    toast.error(error instanceof Error ? error.message : 'Failed to log completion');
+    return null;
+  }
+}
+
+export async function deleteHabitCompletion(habitId: string, date: string): Promise<void> {
+  try {
+    await habitsApiClient.deleteHabitLog(habitId, date);
+  } catch (error) {
+    console.error('Failed to delete habit completion:', error);
+    toast.error(error instanceof Error ? error.message : 'Failed to delete completion');
+    throw error;
+  }
+}
+
+export async function isHabitCompletedOnDate(habitId: string, date: string): Promise<boolean> {
+  try {
+    return await habitsApiClient.isHabitCompletedOnDate(habitId, date);
+  } catch (error) {
+    console.error('Failed to check habit completion:', error);
+    return false;
+  }
 }

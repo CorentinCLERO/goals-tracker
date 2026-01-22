@@ -50,6 +50,8 @@ public class HabitService {
                 .name(habit.getName())
                 .description(habit.getDescription())
                 .frequency(habit.getFrequency())
+                .weeklyTarget(habit.getWeeklyTarget())
+                .category(habit.getCategory())
                 .startDate(habit.getStartDate())
                 .isArchived(habit.getIsArchived())
                 .created_at(habit.getCreatedAt())
@@ -69,6 +71,8 @@ public class HabitService {
         habit.setName(request.getName());
         habit.setDescription(request.getDescription());
         habit.setFrequency(request.getFrequency());
+        habit.setWeeklyTarget(request.getWeeklyTarget());
+        habit.setCategory(request.getCategory());
         habit.setWeeklyTarget(request.getWeeklyTarget());
         habit.setCategory(request.getCategory());
 
@@ -97,7 +101,7 @@ public class HabitService {
         if (!habit.getUser().getId().equals(userId)) {
             throw new  BeanNotFoundException("Accès refusé : ce n'est pas votre habitude");
         }
-        habit.setIsArchived(true);
+        habit.setIsArchived(!habit.getIsArchived());
     
         habitRepository.save(habit);
     }

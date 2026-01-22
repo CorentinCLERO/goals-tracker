@@ -21,9 +21,9 @@ export function HabitTracker({ open, onOpenChange, habit }: HabitTrackerProps) {
   const [completions, setCompletions] = useState<HabitCompletion[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const loadCompletions = useCallback(() => {
+  const loadCompletions = useCallback(async () => {
     if (!habit) return;
-    const habitCompletions = getHabitCompletions(habit.id);
+    const habitCompletions = await getHabitCompletions(habit.id);
     setCompletions(habitCompletions);
   }, [habit]);
 
@@ -34,27 +34,32 @@ export function HabitTracker({ open, onOpenChange, habit }: HabitTrackerProps) {
     }
   }, [open, habit, loadCompletions]);
 
-  const handleToggleDay = (date: Date) => {
+  const handleToggleDay = async (date: Date) => {
     const dateStr = formatDate(date);
     const isCompleted = completions.some(c => c.date === dateStr);
 
-    if (isCompleted) {
-      deleteHabitCompletion(habit.id, dateStr);
-      toast.success('Day unmarked!');
-    } else {
-      const completion: HabitCompletion = {
-        id: crypto.randomUUID(),
-        habitId: habit.id,
-        date: dateStr,
-        createdAt: new Date().toISOString(),
-      };
-      saveHabitCompletion(completion);
-      
-      if (user) {
-        toast.success("Day completed! 🎉");
+    try {
+      if (isCompleted) {
+        await deleteHabitCompletion(habit.id, dateStr);
+        toast.success('Day unmarked!');
+      } else {
+        const completion: HabitCompletion = {
+          id: crypto.randomUUID(),
+          habitId: habit.id,
+          date: dateStr,
+          createdAt: new Date().toISOString(),
+        };
+
+        await saveHabitCompletion(completion);
+        
+        if (user) {
+          toast.success("Day completed! 🎉");
+        }
       }
+      await loadCompletions();
+    } catch (error) {
+      console.error('Error toggling habit completion:', error);
     }
-    loadCompletions();
   };
 
   const handleQuickCheck = () => {
@@ -215,7 +220,7 @@ export function HabitTracker({ open, onOpenChange, habit }: HabitTrackerProps) {
                   return (
                     <button
                       key={date.toISOString()}
-                      onClick={() => !isFuture && handleToggleDay(date)}
+                      onClick={() => !isFuture && handleToggleDay(date)} 
                       disabled={isFuture}
                       className={`
                         aspect-square p-2 rounded-lg border-2 transition-all
@@ -244,7 +249,7 @@ export function HabitTracker({ open, onOpenChange, habit }: HabitTrackerProps) {
           <div className="flex gap-2">
             <Badge variant="outline">{habit.category}</Badge>
             <Badge variant="outline">
-              {habit.frequency === 'daily' ? 'Daily' : `${habit.weeklyTarget}x per week`}
+              {habit.frequency === 'DAILY' ? 'Daily' : `${habit.weeklyTarget}x per week`}
             </Badge>
             <Badge variant="outline">
               Started {new Date(habit.startDate).toLocaleDateString()}
