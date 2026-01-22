@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/auth-context';
-import type { Habit } from '../types';
-import { getHabits, saveHabit, deleteHabit, getHabitCompletions } from '../lib/storage';
+import type { Habit, HabitCompletion } from '../types';
+import { getHabits, saveHabit, deleteHabit, archiveHabit, getHabitCompletions } from '../lib/storage';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -19,12 +19,23 @@ export function Habits() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [trackerHabit, setTrackerHabit] = useState<Habit | null>(null);
+  const [habitCompletions, setHabitCompletions] = useState<Record<string, HabitCompletion[]>>({});
 
-  const loadHabits = useCallback(() => {
+  const loadHabits = useCallback(async () => {
     if (!user) return;
-    const userHabits = getHabits(user.id).filter(h => showArchived || !h.archived);
+    const userHabits = await getHabits();
     setHabits(userHabits);
-  }, [user, showArchived]);
+
+    // Load completions for each habit
+    const completionsObj: Record<string, HabitCompletion[]> = {};
+    await Promise.all(
+      userHabits.map(async (habit) => {
+        const completions = await getHabitCompletions(habit.id);
+        completionsObj[habit.id] = completions;
+      })
+    );
+    setHabitCompletions(completionsObj);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -32,24 +43,37 @@ export function Habits() {
     loadHabits();
   }, [user, showArchived, loadHabits]);
 
-  const handleSaveHabit = (habit: Habit) => {
-    saveHabit(habit);
-    loadHabits();
-    setIsDialogOpen(false);
-    toast.success(selectedHabit ? 'Habit updated successfully!' : 'Habit created successfully!');
+  const handleSaveHabit = async (habit: Habit) => {
+    try {
+      const savedHabit = await saveHabit(habit);
+      if (savedHabit) {
+        await loadHabits();
+        setIsDialogOpen(false);
+        toast.success(selectedHabit ? 'Habit updated successfully!' : 'Habit created successfully!');
+      }
+    } catch (error) {
+      console.error('Error saving habit:', error);
+    }
   };
 
-  const handleDeleteHabit = (habitId: string) => {
-    deleteHabit(habitId);
-    loadHabits();
-    toast.success('Habit deleted successfully!');
+  const handleDeleteHabit = async (habitId: string) => {
+    try {
+      await deleteHabit(habitId);
+      await loadHabits();
+      toast.success('Habit deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting habit:', error);
+    }
   };
 
-  const handleToggleArchive = (habit: Habit) => {
-    const updatedHabit = { ...habit, archived: !habit.archived, updatedAt: new Date().toISOString() };
-    saveHabit(updatedHabit);
-    loadHabits();
-    toast.success(habit.archived ? 'Habit restored!' : 'Habit archived!');
+  const handleToggleArchive = async (habit: Habit) => {
+    try {
+      await archiveHabit(habit.id);
+      await loadHabits();
+      toast.success(habit.isArchived ? 'Habit restored!' : 'Habit archived!');
+    } catch (error) {
+      console.error('Error archiving habit:', error);
+    }
   };
 
   const handleEditHabit = (habit: Habit) => {
@@ -107,17 +131,19 @@ export function Habits() {
             </Card>
           </div>
         ) : (
-          habits.map(habit => {
-            const completions = getHabitCompletions(habit.id);
-            const { currentStreak, bestStreak } = calculateStreak(completions);
-            const completionRate = calculateCompletionRate(completions, habit.startDate);
+          habits
+            .filter(h => showArchived || !h.isArchived)
+            .map(habit => {
+              const completions = habitCompletions[habit.id] || [];
+              const { currentStreak, bestStreak } = calculateStreak(completions);
+              const completionRate = calculateCompletionRate(completions, habit.startDate);
 
-            return (
-              <Card key={habit.id} className={habit.archived ? 'opacity-60' : ''}>
+              return (
+                <Card key={habit.id} className={habit.isArchived ? 'opacity-60' : ''}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg line-clamp-2">{habit.name}</CardTitle>
-                    {habit.archived && (
+                    {habit.isArchived && (
                       <Badge variant="outline" className="shrink-0">Archived</Badge>
                     )}
                   </div>
@@ -129,7 +155,7 @@ export function Habits() {
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="outline">{habit.category}</Badge>
                     <Badge variant="outline">
-                      {habit.frequency === 'daily' ? 'Daily' : `${habit.weeklyTarget}x/week`}
+                      {habit.frequency === 'DAILY' ? 'Daily' : `${habit.weeklyTarget}x/week`}
                     </Badge>
                   </div>
 
@@ -179,7 +205,7 @@ export function Habits() {
                       size="sm"
                       onClick={() => handleToggleArchive(habit)}
                     >
-                      {habit.archived ? '↻' : '📦'}
+                      {habit.isArchived ? '↻' : '📦'}
                     </Button>
                     <Button
                       variant="ghost"

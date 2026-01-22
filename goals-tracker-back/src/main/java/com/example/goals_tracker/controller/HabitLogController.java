@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.goals_tracker.dto.HabitLogRequest;
 import com.example.goals_tracker.dto.HabitLogResponse;
 import com.example.goals_tracker.dto.HabitStatsResponse;
 import com.example.goals_tracker.service.HabitLogService;
@@ -30,19 +31,25 @@ public class HabitLogController {
     private final HabitLogService habitLogService;
 
     @PostMapping("/{id}/log")
-    public ResponseEntity<HabitLogResponse> logToday(
+    public ResponseEntity<HabitLogResponse> log(
             @PathVariable UUID id,
-            @RequestBody(required = false) String notes) {
+            @RequestBody(required = false) HabitLogRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UUID userId = (UUID) auth.getPrincipal();    
-        return ResponseEntity.ok(habitLogService.logHabitToday(id, userId, notes));
+        UUID userId = (UUID) auth.getPrincipal();
+        
+        LocalDate date = (request != null && request.getDate() != null) 
+            ? request.getDate() 
+            : LocalDate.now();
+        String notes = (request != null) ? request.getNotes() : null;
+        
+        return ResponseEntity.ok(habitLogService.logHabit(id, userId, date, notes));
     }
 
     @GetMapping("/{id}/logs")
     public ResponseEntity<List<HabitLogResponse>> getLogs(
-            @PathVariable UUID id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start_date,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end_date) {
+            @PathVariable("id") UUID id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start_date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end_date) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UUID userId = (UUID) auth.getPrincipal();
         return ResponseEntity.ok(habitLogService.getLogs(id, userId, start_date, end_date));

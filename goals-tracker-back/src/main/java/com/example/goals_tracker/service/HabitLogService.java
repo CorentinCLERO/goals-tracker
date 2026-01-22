@@ -25,16 +25,14 @@ public class HabitLogService {
     private final XpService xpService;
 
     @Transactional
-    public HabitLogResponse logHabitToday(UUID habitId, UUID userId, String notes) {
+    public HabitLogResponse logHabit(UUID habitId, UUID userId, LocalDate date, String notes) {
         Habit habit = habitRepository.findById(habitId)
                 .orElseThrow(() -> new BeanNotFoundException("Habitude non trouvée"));
 
         if (!habit.getUser().getId().equals(userId)) throw new BeanNotFoundException("Accès refusé");
-
-        LocalDate today = LocalDate.now();
         
-        HabitLog log = habitLogRepository.findByHabitIdAndDate(habitId, today)
-                .orElse(HabitLog.builder().habit(habit).date(today).build());
+        HabitLog log = habitLogRepository.findByHabitIdAndDate(habitId, date)
+                .orElse(HabitLog.builder().habit(habit).date(date).build());
         
         log.setIsCompleted(true);
         log.setNotes(notes);
@@ -54,6 +52,22 @@ public class HabitLogService {
         Habit habit = habitRepository.findById(habitId).orElseThrow(() -> new BeanNotFoundException("Habitude non trouvée"));
 
         if (!habit.getUser().getId().equals(userId)) throw new BeanNotFoundException("Accès refusé");
+        
+        // If no dates provided, return all logs
+        if (start == null && end == null) {
+            return habitLogRepository.findAllByHabitIdOrderByDateDesc(habitId)
+                    .stream().map(this::mapToResponse).toList();
+        }
+        
+        // If only start date provided, use it as both start and end
+        if (end == null) {
+            end = start;
+        }
+        
+        // If only end date provided, use habit start date as start
+        if (start == null) {
+            start = habit.getStartDate();
+        }
         
         return habitLogRepository.findAllByHabitIdAndDateBetweenOrderByDateDesc(habitId, start, end)
                 .stream().map(this::mapToResponse).toList();
