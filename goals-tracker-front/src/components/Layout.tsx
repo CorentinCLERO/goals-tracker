@@ -1,34 +1,34 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/auth-context';
+import { Outlet, useNavigate, useLocation } from 'react-router';
 import { Button } from './ui/button';
 import { LayoutDashboard, Target, CheckCircle2, User, LogOut, Menu, X, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface LayoutProps {
-  children: React.ReactNode;
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}
-
-export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
+export function Layout() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
+    navigate('/auth');
     toast.success('Logged out successfully');
   };
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'goals', label: 'Goals', icon: Target },
-    { id: 'habits', label: 'Habits', icon: CheckCircle2 },
-    { id: 'gamification', label: 'Gamification', icon: Trophy },
-    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { id: 'goals', label: 'Goals', icon: Target, path: '/goals' },
+    { id: 'habits', label: 'Habits', icon: CheckCircle2, path: '/habits' },
+    { id: 'gamification', label: 'Gamification', icon: Trophy, path: '/gamification' },
+    { id: 'profile', label: 'Profile', icon: User, path: '/profile' },
   ];
 
-  const handleNavClick = (id: string) => {
-    onTabChange(id);
+  const currentPath = location.pathname;
+
+  const handleNavClick = (path: string) => {
+    navigate(path);
     setIsMobileMenuOpen(false);
   };
 
@@ -57,8 +57,8 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
                 return (
                   <Button
                     key={item.id}
-                    variant={activeTab === item.id ? 'default' : 'ghost'}
-                    onClick={() => handleNavClick(item.id)}
+                    variant={currentPath === item.path ? 'default' : 'ghost'}
+                    onClick={() => handleNavClick(item.path)}
                     className="gap-2"
                   >
                     <Icon className="size-4" />
@@ -97,8 +97,8 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
                 return (
                   <Button
                     key={item.id}
-                    variant={activeTab === item.id ? 'default' : 'ghost'}
-                    onClick={() => handleNavClick(item.id)}
+                    variant={currentPath === item.path ? 'default' : 'ghost'}
+                    onClick={() => handleNavClick(item.path)}
                     className="w-full justify-start gap-2"
                   >
                     <Icon className="size-4" />
@@ -121,7 +121,7 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
+        <Outlet />
       </main>
 
       {/* Footer */}

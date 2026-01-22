@@ -42,7 +42,6 @@ export function GoalCard({ goal, onView, onComplete }: GoalCardProps) {
     }
   };
 
-  console.log('GoalCard render:', goal.title, 'Progress:', progress, 'Loading:', progressLoading, "Status:", goal.status);
   return (
     <Card className="flex flex-col">
       <CardHeader>

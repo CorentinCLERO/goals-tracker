@@ -38,7 +38,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch (error) {
       console.error("Login failed:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
+      const errorMessage =
+        error instanceof Error ? error.message : "Erreur inconnue";
       return { success: false, error: errorMessage };
     }
   };
@@ -57,7 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch (error) {
       console.error("Registration failed:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
+      const errorMessage =
+        error instanceof Error ? error.message : "Erreur inconnue";
       return { success: false, error: errorMessage };
     }
   };
@@ -67,18 +69,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     apiClient.logout();
   };
 
-  const updateProfile = async (name: string, email: string) => {
-    // Note: This would need a backend endpoint to update user profile
-    // For now, we'll just update local state
-    if (!user) return;
-
-    const updatedUser: User = {
-      ...user,
-      name,
-      email,
-    };
-
-    setUser(updatedUser);
+  const updateProfile = async (
+    name: string,
+    email: string,
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const updatedUser = await apiClient.updateProfile({ name, email });
+      setUser(updatedUser);
+      return { success: true };
+    } catch (error) {
+      console.error("Profile update failed:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Erreur inconnue";
+      return { success: false, error: errorMessage };
+    }
   };
 
   if (loading) {

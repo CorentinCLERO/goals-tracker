@@ -11,6 +11,11 @@ interface RegisterRequest {
   name: string;
 }
 
+interface UpdateProfileRequest {
+  email: string;
+  name: string;
+}
+
 interface LoginResponse {
   token: string;
 }
@@ -150,6 +155,35 @@ class ApiClient {
 
   async getCurrentUser(): Promise<UserResponse> {
     return this.request<UserResponse>("/auth/me");
+  }
+
+  async updateProfile(userData: UpdateProfileRequest): Promise<UserResponse> {
+    try {
+      const response = await this.request<UserResponse>("/auth/me", {
+        method: "PUT",
+        body: JSON.stringify(userData),
+      });
+      return response;
+    } catch (error) {
+      const apiError = error as ExtendedError;
+      if (apiError.status === 409 && apiError.type === "Email already exists") {
+        throw new Error("Cet email est déjà utilisé.");
+      }
+      if (apiError.status === 400 && apiError.type === "Validation failed") {
+        // Handle validation errors
+        if (apiError.details) {
+          const validationErrors = Object.values(apiError.details);
+          throw new Error(validationErrors.join(", "));
+        }
+        throw new Error("Veuillez vérifier vos informations.");
+      }
+      if (apiError.status === 404 && apiError.type === "User not found") {
+        throw new Error("Utilisateur non trouvé.");
+      }
+      throw new Error(
+        apiError.message || "Erreur lors de la mise à jour du profil.",
+      );
+    }
   }
 
   logout() {

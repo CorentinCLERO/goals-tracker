@@ -3,16 +3,21 @@ package com.example.goals_tracker.service;
 import com.example.goals_tracker.dto.CreateUserRequest;
 import com.example.goals_tracker.dto.LoginRequest;
 import com.example.goals_tracker.dto.LoginResponse;
+import com.example.goals_tracker.dto.UpdateUserRequest;
 import com.example.goals_tracker.dto.UserResponse;
 import com.example.goals_tracker.model.User;
 import com.example.goals_tracker.repository.UserRepository;
 import com.example.goals_tracker.exception.EmailAlreadyExistsException;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+
+import com.example.goals_tracker.exception.BeanNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -70,6 +75,31 @@ public class UserService {
                 .xpPoints(user.getXpPoints())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
+                .build();
+    }
+    
+    @Transactional
+    public UserResponse updateUser(UUID userId, UpdateUserRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BeanNotFoundException("User not found"));
+        
+        if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException("Email already exists: " + request.getEmail());
+        }
+        
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        
+        User updatedUser = userRepository.save(user);
+        
+        return UserResponse.builder()
+                .id(updatedUser.getId())
+                .email(updatedUser.getEmail())
+                .name(updatedUser.getName())
+                .level(updatedUser.getLevel())
+                .xpPoints(updatedUser.getXpPoints())
+                .createdAt(updatedUser.getCreatedAt())
+                .updatedAt(updatedUser.getUpdatedAt())
                 .build();
     }
 }
