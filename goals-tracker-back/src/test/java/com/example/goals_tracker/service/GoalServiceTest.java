@@ -43,6 +43,9 @@ public class GoalServiceTest {
 
     @Mock
     private StepRepository stepRepository;
+    
+    @Mock
+    private XpService xpService;
 
     private UUID userId;
     private UUID goalId;
@@ -287,6 +290,7 @@ public class GoalServiceTest {
         
         verify(goalRepository).findByIdAndUserId(goalId, userId);
         verify(goalRepository).save(any(Goal.class));
+        verify(xpService).addXpToUser(userId, XpService.XP_COMPLETE_GOAL);
     }
 
     @Test

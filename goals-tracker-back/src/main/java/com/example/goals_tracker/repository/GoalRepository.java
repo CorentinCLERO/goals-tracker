@@ -1,17 +1,18 @@
 package com.example.goals_tracker.repository;
 
 
-import com.example.goals_tracker.model.Goal;
-import com.example.goals_tracker.model.StatusEnum;
-import com.example.goals_tracker.model.PriorityEnum;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.example.goals_tracker.model.Goal;
+import com.example.goals_tracker.model.PriorityEnum;
+import com.example.goals_tracker.model.StatusEnum;
 
 @Repository
 public interface GoalRepository extends JpaRepository<Goal, UUID> {

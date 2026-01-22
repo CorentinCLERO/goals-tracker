@@ -107,7 +107,7 @@ export async function markGoalAsCompleted(
   goalId: string,
 ): Promise<ApiGoalResponse> {
   return apiRequest<ApiGoalResponse>(`/goals/${goalId}/completed`, {
-    method: "PUT",
+    method: "PATCH",
   });
 }
 

@@ -1,15 +1,7 @@
 export type Priority = "low" | "medium" | "high";
-export type GoalStatus = "ACTIVE" | "completed" | "abandoned";
+export type GoalStatus = "active" | "completed" | "abandoned";
 export type StepStatus = "todo" | "completed";
 export type Frequency = "daily" | "weekly";
-export type BadgeType =
-  | "finisher"
-  | "commitment"
-  | "streak_master"
-  | "habit_builder"
-  | "early_bird"
-  | "consistent";
-
 export interface User {
   id: string;
   email: string;
@@ -70,7 +62,7 @@ export interface Stats {
 }
 
 export interface Badge {
-  id: BadgeType;
+  id: string;
   name: string;
   description: string;
   icon: string;
@@ -80,7 +72,7 @@ export interface Badge {
 export interface UserAchievement {
   id: string;
   userId: string;
-  badgeId: BadgeType;
+  badgeId: string;
   unlockedAt: string;
   seen: boolean;
 }

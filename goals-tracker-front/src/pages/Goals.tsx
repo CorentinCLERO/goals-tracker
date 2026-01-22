@@ -116,7 +116,7 @@ export function Goals() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="ACTIVE">In Progress</SelectItem>
+                  <SelectItem value="active">In Progress</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="abandoned">Abandoned</SelectItem>
                 </SelectContent>

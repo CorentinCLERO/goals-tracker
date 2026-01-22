@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -83,7 +84,7 @@ public class GoalController {
         return ResponseEntity.ok(updatedGoal);
     }
 
-    @PutMapping("/{id}/completed")
+    @PatchMapping("/{id}/completed")
     public ResponseEntity<GoalResponse> markGoalAsCompleted(@PathVariable("id") UUID id) {
         log.info("Marking goal as completed with ID: {}", id);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

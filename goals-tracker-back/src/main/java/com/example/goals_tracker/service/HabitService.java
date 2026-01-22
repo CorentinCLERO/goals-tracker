@@ -21,6 +21,7 @@ public class HabitService {
 
     private final HabitRepository habitRepository;
     private final UserRepository userRepository;
+    private final XpService xpService;
 
     @Transactional
     public HabitResponse createHabit(UUID userId, HabitRequest request) {
@@ -122,5 +123,17 @@ public class HabitService {
         }
 
         return mapToResponse(habit);
+    }
+    
+    @Transactional
+    public void markHabitCompleted(UUID habitId, UUID userId) {
+        Habit habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new BeanNotFoundException("Habitude non trouvée"));
+
+        if (!habit.getUser().getId().equals(userId)) {
+            throw new BeanNotFoundException("Accès refusé : vous ne pouvez pas marquer cette habitude");
+        }
+        
+        xpService.addXpToUser(userId, XpService.XP_COMPLETE_HABIT);
     }
 }

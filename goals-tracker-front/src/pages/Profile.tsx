@@ -5,23 +5,33 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { User, Save, Trophy } from 'lucide-react';
+import { User, Save, Trophy, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getUserProgress, BADGES } from '../lib/gamification';
+import { useGamification } from '../hooks/useGamification';
 
 export function Profile() {
   const { user, updateProfile } = useAuth();
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-
-  const userProgress = user ? getUserProgress(user.id) : { xp: 0, level: 1, badges: [] };
-  const unlockedBadgeIds = new Set(userProgress.badges.map((b: { badgeId: string }) => b.badgeId));
+  
+  const { userProgress, availableBadges, loading } = useGamification(user?.id || "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfile(name, email);
     toast.success('Profile updated successfully!');
   };
+
+  const unlockedBadgeIds = new Set(userProgress.badges.map(b => b.badgeId));
+  const unlockedBadges = availableBadges.filter(badge => unlockedBadgeIds.has(badge.id));
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -50,13 +60,13 @@ export function Profile() {
             <div className="flex items-center justify-between">
               <span className="text-sm">Badges Unlocked</span>
               <Badge variant="secondary" className="bg-yellow-500 text-white">
-                {unlockedBadgeIds.size} / {BADGES.length}
+                {unlockedBadgeIds.size} / {availableBadges.length}
               </Badge>
             </div>
             
-            {unlockedBadgeIds.size > 0 && (
+            {unlockedBadges.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {BADGES.filter((b: { id: string }) => unlockedBadgeIds.has(b.id)).map((badge: { id: string; icon: string; name: string; description: string }) => (
+                {unlockedBadges.map((badge) => (
                   <div
                     key={badge.id}
                     className="flex items-center gap-2 px-3 py-2 bg-white border-2 border-yellow-400 rounded-lg"
@@ -71,7 +81,7 @@ export function Profile() {
               </div>
             )}
             
-            {unlockedBadgeIds.size === 0 && (
+            {unlockedBadges.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
                 Complete goals and maintain streaks to unlock badges!
               </p>

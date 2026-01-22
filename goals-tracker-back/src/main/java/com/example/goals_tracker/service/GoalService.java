@@ -30,6 +30,7 @@ public class GoalService {
     private final GoalRepository goalRepository;
     private final UserRepository userRepository;
     private final StepRepository stepRepository;
+    private final XpService xpService;
 
     public GoalResponse createGoal(GoalRequest goalRequest, UUID userId) {
         PriorityEnum priorityEnum = parsePriority(goalRequest.getPriority());
@@ -93,10 +94,17 @@ public class GoalService {
         Goal existingGoal = goalRepository.findByIdAndUserId(goalId, userId)
                 .orElseThrow(() -> new BeanNotFoundException("Goal not found"));
         
+        boolean wasAlreadyCompleted = existingGoal.getStatus() == StatusEnum.COMPLETED;
+        
         existingGoal.setStatus(StatusEnum.COMPLETED);
         existingGoal.setCompletedAt(LocalDateTime.now());
         
         Goal updatedGoal = goalRepository.save(existingGoal);
+        
+        if (!wasAlreadyCompleted) {
+            xpService.addXpToUser(userId, XpService.XP_COMPLETE_GOAL);
+        }
+        
         return GoalResponse.from(updatedGoal);
     }
 

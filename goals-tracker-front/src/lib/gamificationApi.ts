@@ -1,8 +1,7 @@
 import type {
-  ApiStepRequest,
-  ApiStepResponse,
-  ApiUpdateStepRequest,
-} from "../types/step.api";
+  ApiBadgeResponse,
+  ApiUserXpResponse,
+} from "../types/gamification.api";
 import type { ApiError, ExtendedError } from "../types/common.api";
 
 const API_BASE_URL = "http://localhost:8080/api";
@@ -65,60 +64,14 @@ async function apiRequest<T>(
   return JSON.parse(text);
 }
 
-export async function getSteps(goalId: string): Promise<ApiStepResponse[]> {
-  return apiRequest<ApiStepResponse[]>(`/goals/${goalId}/steps`);
+export async function getAllBadges(): Promise<ApiBadgeResponse[]> {
+  return apiRequest<ApiBadgeResponse[]>("/badges");
 }
 
-export async function createStep(
-  goalId: string,
-  stepData: ApiStepRequest,
-): Promise<ApiStepResponse> {
-  return apiRequest<ApiStepResponse>(`/goals/${goalId}/steps`, {
-    method: "POST",
-    body: JSON.stringify(stepData),
-  });
+export async function getUserBadges(): Promise<ApiBadgeResponse[]> {
+  return apiRequest<ApiBadgeResponse[]>("/users/me/badges");
 }
 
-export async function updateStep(
-  goalId: string,
-  stepId: string,
-  stepData: ApiUpdateStepRequest,
-): Promise<ApiStepResponse> {
-  return apiRequest<ApiStepResponse>(`/goals/${goalId}/steps/${stepId}`, {
-    method: "PATCH",
-    body: JSON.stringify(stepData),
-  });
-}
-
-export async function completeStep(
-  goalId: string,
-  stepId: string,
-): Promise<ApiStepResponse> {
-  return apiRequest<ApiStepResponse>(
-    `/goals/${goalId}/steps/${stepId}/complete`,
-    {
-      method: "PATCH",
-    },
-  );
-}
-
-export async function uncompleteStep(
-  goalId: string,
-  stepId: string,
-): Promise<ApiStepResponse> {
-  return apiRequest<ApiStepResponse>(
-    `/goals/${goalId}/steps/${stepId}/uncomplete`,
-    {
-      method: "PATCH",
-    },
-  );
-}
-
-export async function deleteStep(
-  goalId: string,
-  stepId: string,
-): Promise<void> {
-  await apiRequest<void>(`/goals/${goalId}/steps/${stepId}`, {
-    method: "DELETE",
-  });
+export async function getUserXp(): Promise<ApiUserXpResponse> {
+  return apiRequest<ApiUserXpResponse>("/users/me/xp");
 }
