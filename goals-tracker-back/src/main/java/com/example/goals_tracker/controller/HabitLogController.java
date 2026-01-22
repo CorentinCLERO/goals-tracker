@@ -1,7 +1,11 @@
 package com.example.goals_tracker.controller;
 
 import java.util.UUID;
-
+import java.time.LocalDate; 
+import java.util.List;       
+import org.springframework.web.bind.annotation.GetMapping;    
+import org.springframework.web.bind.annotation.RequestParam;  
+import org.springframework.format.annotation.DateTimeFormat;  
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,5 +34,15 @@ public class HabitLogController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UUID userId = (UUID) auth.getPrincipal();    
         return ResponseEntity.ok(habitLogService.logHabitToday(id, userId, notes));
+    }
+
+    @GetMapping("/{id}/logs")
+    public ResponseEntity<List<HabitLogResponse>> getLogs(
+            @PathVariable UUID id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start_date,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end_date) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+        return ResponseEntity.ok(habitLogService.getLogs(id, userId, start_date, end_date));
     }
 }

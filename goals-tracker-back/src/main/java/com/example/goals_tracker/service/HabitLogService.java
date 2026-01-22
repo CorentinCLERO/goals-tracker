@@ -1,6 +1,7 @@
 package com.example.goals_tracker.service;
 import java.time.LocalDate;
 import java.util.UUID;
+import java.util.List;       
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,12 @@ public class HabitLogService {
         return HabitLogResponse.builder()
                 .id(log.getId()).date(log.getDate())
                 .isCompleted(log.getIsCompleted()).notes(log.getNotes()).build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<HabitLogResponse> getLogs(UUID habitId, UUID userId, LocalDate start, LocalDate end) {
+        return habitLogRepository.findAllByHabitIdAndDateBetweenOrderByDateDesc(habitId, start, end)
+                .stream().map(this::mapToResponse).toList();
     }
 
    
