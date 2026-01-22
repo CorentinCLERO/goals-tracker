@@ -1,7 +1,9 @@
 package com.example.goals_tracker.service;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,8 @@ import com.example.goals_tracker.repository.GoalRepository;
 import com.example.goals_tracker.repository.HabitLogRepository;
 import com.example.goals_tracker.repository.HabitRepository;
 import com.example.goals_tracker.dto.GlobalStatsResponse;
+import com.example.goals_tracker.model.Goal;
+
 import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
@@ -106,6 +110,17 @@ public class StatsService {
         long habitXP = habitLogRepository.countByHabitUserId(userId) * 5;
         long goalXP = goalRepository.countByUserIdAndStatus(userId, StatusEnum.COMPLETED) * 50;
         return (int) (habitXP + goalXP);
+    }
+
+    public Map<String, Long> getGoalsStatsByCategory(UUID userId) {
+        List<Goal> allGoals = goalRepository.findByUserId(userId);
+        
+        return allGoals.stream()
+                .filter(goal -> goal.getCategory() != null)
+                .collect(Collectors.groupingBy(
+                        Goal::getCategory, 
+                        Collectors.counting()
+                ));
     }
     
 }

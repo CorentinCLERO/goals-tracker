@@ -1,5 +1,6 @@
 package com.example.goals_tracker.controller;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -34,5 +35,13 @@ public class StatsController {
         UUID userId = (UUID) auth.getPrincipal();
 
         return ResponseEntity.ok(statsService.getGlobalStats(userId));
+    }
+
+    @GetMapping("/stats/goals")
+    public ResponseEntity<Map<String, Long>> getGoalsStatsByCategory() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+
+        return ResponseEntity.ok(statsService.getGoalsStatsByCategory(userId));
     }
 }
