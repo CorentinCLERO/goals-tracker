@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/auth-context';
-import type { Goal, Habit, Stats, UserProgress } from '../types';
+import type { Goal, Habit, Stats } from '../types';
 import { getGoals, getHabits, getSteps, getHabitCompletions } from '../lib/storage';
-import { getUserProgress, getXpForNextLevel, getXpProgress } from '../lib/gamification';
+import { useGamification, useUserXp } from '../hooks/useGamification';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
-import { Target, CheckCircle2, Flame, TrendingUp, Star, Trophy } from 'lucide-react';
+import { Target, CheckCircle2, Flame, TrendingUp, Star, Trophy, Loader2 } from 'lucide-react';
 import { calculateStreak, formatDate } from '../lib/utils-habit';
 
 export function Dashboard() {
@@ -20,22 +20,22 @@ export function Dashboard() {
     activeGoals: 0,
     activeHabits: 0,
   });
-  const [userProgress, setUserProgress] = useState<UserProgress>({ userId: '', xp: 0, level: 1, badges: [] });
+  
+  const { userProgress, loading } = useGamification(user?.id || "");
+  const { xpData } = useUserXp(user?.id || "");
 
   const loadData = useCallback(() => {
     if (!user) return;
 
     const userGoals = getGoals(user.id);
     const userHabits = getHabits(user.id).filter(h => !h.archived);
-    const progress = getUserProgress(user.id);
     
     setGoals(userGoals);
     setHabits(userHabits);
-    setUserProgress(progress);
 
     // Calculate stats
     const completedGoals = userGoals.filter(g => g.status === 'completed').length;
-    const activeGoals = userGoals.filter(g => g.status === 'ACTIVE').length;
+    const activeGoals = userGoals.filter(g => g.status === 'active').length;
     
     let longestStreak = 0;
     let habitsCompletedToday = 0;
@@ -81,9 +81,18 @@ export function Dashboard() {
     }
   };
 
-  const ongoingGoals = goals.filter(g => g.status === 'ACTIVE').slice(0, 5);
-  const nextLevelXp = getXpForNextLevel(userProgress.level);
-  const progressPercent = getXpProgress(userProgress.xp, userProgress.level);
+  const ongoingGoals = goals.filter(g => g.status === 'active').slice(0, 5);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const progressPercent = xpData.nextLevelXp === xpData.currentLevelXp ? 100 : 
+    ((userProgress.xp - xpData.currentLevelXp) / (xpData.nextLevelXp - xpData.currentLevelXp)) * 100;
 
   return (
     <div className="space-y-6">
@@ -111,7 +120,7 @@ export function Dashboard() {
                   </Badge>
                 </CardTitle>
                 <CardDescription className="text-indigo-700">
-                  {userProgress.xp} XP • {nextLevelXp - userProgress.xp} XP to next level
+                  {userProgress.xp} XP • {xpData.xpNeededForNextLevel} XP to next level
                 </CardDescription>
               </div>
             </div>

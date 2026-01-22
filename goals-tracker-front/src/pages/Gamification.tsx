@@ -1,69 +1,35 @@
-import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge as BadgeUI } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
-import { Button } from '../components/ui/button';
-import { 
-  BADGES, 
-  CHALLENGES, 
-  getUserProgress, 
-  checkAllBadges,
-  unlockBadge,
-  getXpForNextLevel,
-  getXpProgress
-} from '../lib/gamification';
-import { Trophy, Star, Zap, Target } from 'lucide-react';
-import { toast } from 'sonner';
-import type { UserAchievement } from '../types';
+import { useGamification, useUserXp } from '../hooks/useGamification';
+import { Trophy, Star, Zap, Target, Loader2 } from 'lucide-react';
 
 export function Gamification() {
   const { user } = useAuth();
-  const [userProgress, setUserProgress] = useState({ xp: 0, level: 1, badges: [] as UserAchievement[] });
-  const [unlockedBadges, setUnlockedBadges] = useState<Set<string>>(new Set());
+  const { userProgress, availableBadges, loading, error } = useGamification(user?.id || "");
+  const { xpData, loading: xpLoading } = useUserXp(user?.id || "");
 
-  const loadProgress = useCallback(() => {
-    if (!user) return;
+  if (loading || xpLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
-    const progress = getUserProgress(user.id);
-    setUserProgress(progress);
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-red-500">Erreur: {error}</p>
+      </div>
+    );
+  }
 
-    const unlocked = new Set(progress.badges.map(b => b.badgeId));
-    setUnlockedBadges(unlocked);
+  const progressPercent = xpData.xpNeededForNextLevel === 0 ? 100 : 
+    ((userProgress.xp - xpData.currentLevelXp) / (xpData.nextLevelXp - xpData.currentLevelXp)) * 100;
 
-    // Check for newly unlocked badges
-    const newBadges = checkAllBadges(user.id, progress.badges);
-    
-    newBadges.forEach(badgeId => {
-      unlockBadge(user.id, badgeId);
-      const badge = BADGES.find(b => b.id === badgeId);
-      
-      if (badge) {
-        toast.success(`🎉 Badge Unlocked: ${badge.name}`, {
-          description: badge.description,
-        });
-      }
-      
-      unlocked.add(badgeId);
-    });
-
-    if (newBadges.length > 0) {
-      const updatedProgress = getUserProgress(user.id);
-      setUserProgress(updatedProgress);
-      setUnlockedBadges(new Set(unlocked));
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadProgress();
-  }, [user, loadProgress]);
-
-  const nextLevelXp = getXpForNextLevel(userProgress.level);
-  const progressPercent = getXpProgress(userProgress.xp, userProgress.level);
-
-  const isBadgeUnlocked = (badgeId: string) => unlockedBadges.has(badgeId);
+  const unlockedBadgeIds = new Set(userProgress.badges.map(b => b.badgeId));
 
   return (
     <div className="space-y-6">
@@ -85,7 +51,7 @@ export function Gamification() {
               <div>
                 <CardTitle className="text-2xl">Level {userProgress.level}</CardTitle>
                 <CardDescription className="text-indigo-700">
-                  {userProgress.xp} XP • {nextLevelXp - userProgress.xp} XP to next level
+                  {userProgress.xp} XP • {xpData.xpNeededForNextLevel} XP to next level
                 </CardDescription>
               </div>
             </div>
@@ -102,6 +68,9 @@ export function Gamification() {
               <span>{Math.round(progressPercent)}%</span>
             </div>
             <Progress value={progressPercent} className="h-3" />
+            <div className="text-center text-sm text-muted-foreground">
+              {xpData.levelName}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -114,15 +83,15 @@ export function Gamification() {
             <div>
               <CardTitle>Badges</CardTitle>
               <CardDescription>
-                {unlockedBadges.size} of {BADGES.length} unlocked
+                {userProgress.badges.length} of {availableBadges.length} unlocked
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {BADGES.map((badge) => {
-              const unlocked = isBadgeUnlocked(badge.id);
+            {availableBadges.map((badge) => {
+              const unlocked = unlockedBadgeIds.has(badge.id);
               return (
                 <div
                   key={badge.id}
@@ -158,54 +127,6 @@ export function Gamification() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Challenges */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Zap className="size-5 text-orange-600" />
-            <div>
-              <CardTitle>Active Challenges</CardTitle>
-              <CardDescription>
-                Complete challenges to earn bonus XP
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {CHALLENGES.map((challenge) => (
-              <div
-                key={challenge.id}
-                className="p-4 border rounded-lg bg-gradient-to-r from-orange-50 to-red-50 border-orange-200"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="font-semibold mb-1">{challenge.title}</h4>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {challenge.description}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <BadgeUI variant="secondary" className="bg-orange-500 text-white">
-                        +{challenge.xpReward} XP
-                      </BadgeUI>
-                      {challenge.requirement.days && (
-                        <span className="text-xs text-muted-foreground">
-                          {challenge.requirement.days} days
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Track Progress
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* XP Earning Guide */}
       <Card>
         <CardHeader>
@@ -220,7 +141,7 @@ export function Gamification() {
               </div>
               <div>
                 <div className="font-medium">Complete a Goal</div>
-                <div className="text-sm text-muted-foreground">+100 XP</div>
+                <div className="text-sm text-muted-foreground">+50 XP</div>
               </div>
             </div>
             
@@ -230,7 +151,7 @@ export function Gamification() {
               </div>
               <div>
                 <div className="font-medium">Complete a Step</div>
-                <div className="text-sm text-muted-foreground">+25 XP</div>
+                <div className="text-sm text-muted-foreground">+10 XP</div>
               </div>
             </div>
 
@@ -240,7 +161,7 @@ export function Gamification() {
               </div>
               <div>
                 <div className="font-medium">Complete a Habit</div>
-                <div className="text-sm text-muted-foreground">+10 XP</div>
+                <div className="text-sm text-muted-foreground">+5 XP</div>
               </div>
             </div>
 
@@ -249,8 +170,8 @@ export function Gamification() {
                 <Star className="size-5 text-yellow-600" />
               </div>
               <div>
-                <div className="font-medium">Unlock a Badge</div>
-                <div className="text-sm text-muted-foreground">+50 XP</div>
+                <div className="font-medium">7-Day Streak</div>
+                <div className="text-sm text-muted-foreground">+30 XP</div>
               </div>
             </div>
           </div>

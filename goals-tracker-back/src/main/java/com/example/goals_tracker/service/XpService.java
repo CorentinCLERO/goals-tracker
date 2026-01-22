@@ -37,6 +37,8 @@ public class XpService {
             .level(user.getLevel())
             .levelName(getLevelName(user.getLevel()))
             .xpNeededForNextLevel(getXpNeededForNextLevel(user.getXpPoints()))
+            .currentLevelXp(getCurrentLevelXp(user.getLevel()))
+            .nextLevelXp(getNextLevelXp(user.getLevel()))
             .totalBadges(totalBadges)
             .build();
     }
@@ -78,5 +80,27 @@ public class XpService {
         if (currentXp < 600) return 600 - currentXp;
         if (currentXp < 1000) return 1000 - currentXp;
         return 0;
+    }
+    
+    private int getCurrentLevelXp(int level) {
+        return switch (level) {
+            case 1 -> 0;
+            case 2 -> 100;
+            case 3 -> 300;
+            case 4 -> 600;
+            case 5 -> 1000;
+            default -> 0;
+        };
+    }
+    
+    private int getNextLevelXp(int level) {
+        return switch (level) {
+            case 1 -> 100;
+            case 2 -> 300;
+            case 3 -> 600;
+            case 4 -> 1000;
+            case 5 -> 1000;
+            default -> 100;
+        };
     }
 }

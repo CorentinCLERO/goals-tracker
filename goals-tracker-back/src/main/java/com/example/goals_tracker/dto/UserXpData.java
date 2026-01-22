@@ -14,5 +14,7 @@ public class UserXpData {
     private Integer level;
     private String levelName;
     private Integer xpNeededForNextLevel;
+    private Integer currentLevelXp;
+    private Integer nextLevelXp;
     private Integer totalBadges;
 }

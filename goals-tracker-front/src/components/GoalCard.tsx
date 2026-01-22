@@ -27,7 +27,7 @@ export function GoalCard({ goal, onView, onComplete }: GoalCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'active': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'abandoned': return 'bg-gray-100 text-gray-800 border-gray-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -35,13 +35,14 @@ export function GoalCard({ goal, onView, onComplete }: GoalCardProps) {
 
   const formatStatus = (status: string) => {
     switch (status) {
-      case 'in_progress': return 'In Progress';
+      case 'active': return 'Active';
       case 'completed': return 'Completed';
       case 'abandoned': return 'Abandoned';
       default: return status;
     }
   };
 
+  console.log('GoalCard render:', goal.title, 'Progress:', progress, 'Loading:', progressLoading, "Status:", goal.status);
   return (
     <Card className="flex flex-col">
       <CardHeader>
@@ -88,7 +89,7 @@ export function GoalCard({ goal, onView, onComplete }: GoalCardProps) {
             <Eye className="size-4 mr-2" />
             View
           </Button>
-          {goal.status === 'completed' && (
+          {goal.status === 'active' && (
             <Button
               variant="default"
               size="sm"

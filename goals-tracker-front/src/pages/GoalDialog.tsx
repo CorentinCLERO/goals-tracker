@@ -22,7 +22,7 @@ export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
-  const [status, setStatus] = useState<GoalStatus>('ACTIVE');
+  const [status, setStatus] = useState<GoalStatus>('active');
   const [category, setCategory] = useState('Personal');
 
   const resetForm = useCallback(() => {
@@ -31,7 +31,7 @@ export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps
     setStartDate(new Date().toISOString().split('T')[0]);
     setDueDate('');
     setPriority('medium');
-    setStatus('ACTIVE');
+    setStatus('active');
     setCategory('Personal');
   }, []);
 
@@ -149,7 +149,7 @@ export function GoalDialog({ open, onOpenChange, goal, onSave }: GoalDialogProps
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="abandoned">Abandoned</SelectItem>
                 </SelectContent>

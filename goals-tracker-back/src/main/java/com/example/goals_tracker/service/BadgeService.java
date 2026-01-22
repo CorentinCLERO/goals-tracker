@@ -7,6 +7,7 @@ import com.example.goals_tracker.model.UserBadge;
 import com.example.goals_tracker.repository.BadgeRepository;
 import com.example.goals_tracker.repository.GoalRepository;
 import com.example.goals_tracker.repository.HabitRepository;
+import com.example.goals_tracker.repository.HabitLogRepository;
 import com.example.goals_tracker.repository.UserBadgeRepository;
 import com.example.goals_tracker.repository.UserRepository;
 import com.example.goals_tracker.model.StatusEnum;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +31,7 @@ public class BadgeService {
     private final UserRepository userRepository;
     private final GoalRepository goalRepository;
     private final HabitRepository habitRepository;
+    private final HabitLogRepository habitLogRepository;
     
     public List<BadgeData> getAllBadges() {
         return badgeRepository.findAll().stream()
@@ -75,6 +78,32 @@ public class BadgeService {
         if (commitmentBadge == null || userBadgeRepository.existsByUserIdAndBadgeId(userId, commitmentBadge.getId())) {
             return;
         }
+        
+        // Check if user has any habit with 30-day streak
+        boolean has30DayStreak = habitRepository.findAllByUserId(userId).stream()
+            .anyMatch(habit -> calculateHabitStreak(habit.getId()) >= 30);
+            
+        if (has30DayStreak) {
+            awardBadge(userId, commitmentBadge.getId());
+        }
+    }
+    
+    private int calculateHabitStreak(UUID habitId) {
+        LocalDate today = LocalDate.now();
+        int streak = 0;
+        
+        // Count consecutive days backwards from today
+        for (LocalDate date = today; ; date = date.minusDays(1)) {
+            boolean hasLog = habitLogRepository.existsByHabitIdAndDateAndIsCompleted(habitId, date, true);
+            
+            if (hasLog) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        
+        return streak;
     }
     
     private void awardBadge(UUID userId, UUID badgeId) {
