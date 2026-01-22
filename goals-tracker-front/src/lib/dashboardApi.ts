@@ -1,7 +1,6 @@
 import type { ApiDashboardResponse } from "../types/dashboard.api";
 import type { ApiError, ExtendedError } from "../types/common.api";
-
-const API_BASE_URL = "http://localhost:8080/api";
+import { API_BASE_URL } from "./config";
 
 function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
