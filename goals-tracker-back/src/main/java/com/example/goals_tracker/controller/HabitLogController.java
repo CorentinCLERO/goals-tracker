@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.goals_tracker.dto.HabitLogResponse;
+import com.example.goals_tracker.dto.HabitStatsResponse;
 import com.example.goals_tracker.service.HabitLogService;
 
 import lombok.RequiredArgsConstructor;
@@ -55,5 +56,13 @@ public class HabitLogController {
         UUID userId = (UUID) auth.getPrincipal();
         habitLogService.deleteLogByDate(id, userId, date);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/stats")
+    public ResponseEntity<HabitStatsResponse> getStats(
+            @PathVariable UUID id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = (UUID) auth.getPrincipal();
+        return ResponseEntity.ok(habitLogService.getStats(id, userId));
     }
 }
