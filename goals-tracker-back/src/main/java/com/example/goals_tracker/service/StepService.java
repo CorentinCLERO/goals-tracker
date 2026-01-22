@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class StepService {
   private final StepRepository stepRepository;
   private final GoalRepository goalRepository;
+  private final XpService xpService;
 
   public StepResponse createStep(StepRequest stepRequest, UUID goalId) {
 
@@ -159,6 +160,7 @@ public class StepService {
     // Set completedAt when marking as completed
     if (completed && step.getCompletedAt() == null) {
       step.setCompletedAt(LocalDateTime.now());
+      xpService.addXpToUser(userId, XpService.XP_COMPLETE_STEP);
     }
     // Clear completedAt when marking as not completed
     if (!completed) {
