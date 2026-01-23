@@ -5,6 +5,9 @@ import react from "@vitejs/plugin-react-swc";
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: ["goals-tracker-front-780131803540.europe-west1.run.app"],
+    allowedHosts: true,
+  },
+  preview: {
+    allowedHosts: true,
   },
 });
