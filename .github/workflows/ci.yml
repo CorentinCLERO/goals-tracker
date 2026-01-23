@@ -97,13 +97,26 @@ jobs:
           docker push ${{ secrets.USERNAME }}/${{ matrix.image_name }}:latest
           docker push ${{ secrets.USERNAME }}/${{ matrix.image_name }}:${{ steps.vars.outputs.sha_short }}
 
-      - name: Trigger Render deploy via API
+      - name: Trigger Render backend deploy via API
+        if: matrix.service == 'backend'
         env:
           RENDER_SERVICE_ID_BACKEND: srv-d5npmbv5r7bs73dtqhr0
           RENDER_API_TOKEN: ${{ secrets.RENDER_API_TOKEN }}
         run: |
           echo "Triggering backend deploy..."
           curl -X POST "https://api.render.com/v1/services/${RENDER_SERVICE_ID_BACKEND}/deploys" \
+              -H "Authorization: Bearer ${RENDER_API_TOKEN}" \
+              -H "Accept: application/json"
+          echo "Triggering worker deploy..."
+
+      - name: Trigger Render docs deploy via API
+        if: matrix.service == 'docs'
+        env:
+          RENDER_SERVICE_ID_DOCS: srv-d5pk62npm1nc73c2u4ag
+          RENDER_API_TOKEN: ${{ secrets.RENDER_API_TOKEN }}
+        run: |
+          echo "Triggering docs deploy..."
+          curl -X POST "https://api.render.com/v1/services/${RENDER_SERVICE_ID_DOCS}/deploys" \
               -H "Authorization: Bearer ${RENDER_API_TOKEN}" \
               -H "Accept: application/json"
           echo "Triggering worker deploy..."
