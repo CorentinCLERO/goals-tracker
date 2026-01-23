@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/auth-context';
 import { Outlet, useNavigate, useLocation } from 'react-router';
 import { Button } from './ui/button';
-import { LayoutDashboard, Target, CheckCircle2, User, LogOut, Menu, X, Trophy } from 'lucide-react';
+import { LayoutDashboard, Target, CheckCircle2, BarChart3, Trophy, User, LogOut, Menu, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Layout() {
@@ -21,6 +21,7 @@ export function Layout() {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { id: 'goals', label: 'Goals', icon: Target, path: '/goals' },
     { id: 'habits', label: 'Habits', icon: CheckCircle2, path: '/habits' },
+    { id: 'stats', label: 'Stats', icon: BarChart3, path: '/stats' },
     { id: 'gamification', label: 'Gamification', icon: Trophy, path: '/gamification' },
     { id: 'profile', label: 'Profile', icon: User, path: '/profile' },
   ];

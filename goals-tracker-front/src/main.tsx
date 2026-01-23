@@ -9,6 +9,7 @@ import { Auth } from "./pages/Auth";
 import { Dashboard } from "./pages/Dashboard";
 import { Goals } from "./pages/Goals";
 import { Habits } from "./pages/Habits";
+import { Stats } from "./pages/Stats";
 import { Gamification } from "./pages/Gamification";
 import { Profile } from "./pages/Profile";
 import { Toaster } from "./components/ui/sonner";
@@ -31,6 +32,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="goals" element={<Goals />} />
             <Route path="habits" element={<Habits />} />
+            <Route path="stats" element={<Stats />} />
             <Route path="gamification" element={<Gamification />} />
             <Route path="profile" element={<Profile />} />
           </Route>

@@ -130,7 +130,9 @@ public class StatsService {
                     List<HabitLog> logs = habitLogRepository.findAllByHabitIdOrderByDateDesc(habit.getId());
                     
                     long totalCompleted = logs.stream().filter(HabitLog::getIsCompleted).count();
-                    double rate = logs.isEmpty() ? 0.0 : (double) totalCompleted / logs.size() * 100.0;
+
+                    long daysSinceStart = java.time.temporal.ChronoUnit.DAYS.between(habit.getStartDate(), LocalDate.now()) + 1;
+                    double rate = daysSinceStart > 0 ? (double) totalCompleted / daysSinceStart * 100.0 : 0.0;
 
                     return HabitStatsResponse.builder()
                             .habitName(habit.getName())

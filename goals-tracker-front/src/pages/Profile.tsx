@@ -183,24 +183,6 @@ export function Profile() {
           </form>
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>About</CardTitle>
-          <CardDescription>Goal & Habit Tracker Application</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>
-            This application helps you track your personal and professional
-            goals while building positive habits through gamification and
-            progress tracking.
-          </p>
-          <p className="text-xs">
-            Note: Data is stored locally in your browser. Clearing browser data
-            will reset your progress.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
