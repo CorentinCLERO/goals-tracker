@@ -226,33 +226,32 @@ Through this project, the team will:
 #### Matin (9h10 - 12h40)
 
 ##### Tests finaux
-- [ ] Faire des tests fonctionnels complets
-- [ ] Faire des tests de bout en bout (E2E) si possible
-- [ ] Tester la compatibilité navigateurs
-- [ ] Tester le responsive design
-- [ ] Résoudre les derniers bugs
+- [x] Faire des tests fonctionnels complets
+- [x] Faire des tests de bout en bout (E2E) si possible
+- [x] Tester la compatibilité navigateurs
+- [x] Tester le responsive design
+- [x] Résoudre les derniers bugs
 
 ##### Optimisation
-- [ ] Améliorer les performances
-- [ ] Nettoyer le code (refactoring si nécessaire)
-- [ ] Valider le respect des bonnes pratiques
+- [x] Améliorer les performances
+- [x] Nettoyer le code (refactoring si nécessaire)
+- [x] Valider le respect des bonnes pratiques
 
 ##### Documentation finale
-- [ ] Finaliser le README.md avec :
-  - [ ] Instructions complètes pour exécuter le projet
-  - [ ] Documentation des API développées
-  - [ ] Guide d'utilisation de l'application
-  - [ ] Captures d'écran de l'interface
-- [ ] Ajouter un fichier CONTRIBUTING.md
-- [ ] Ajouter la documentation technique dans docs/
+- [x] Finaliser le README.md avec :
+  - [x] Instructions complètes pour exécuter le projet
+  - [x] Documentation des API développées
+  - [x] Guide d'utilisation de l'application
+- [x] Ajouter un fichier CONTRIBUTING.md
+- [x] Ajouter la documentation technique dans docs/
 
 ##### Vérification finale
 - [ ] Tester le démarrage complet avec `docker-compose up`
-- [ ] Vérifier que tous les workflows CI passent
-- [ ] Tester sur une machine vierge si possible
+- [x] Vérifier que tous les workflows CI passent
+- [x] Tester sur une machine vierge si possible
 
 #### Après-midi (13h40 - 17h10)
-- [ ] Préparer la présentation du projet
+- [x] Préparer la présentation du projet
 - [ ] Faire la démonstration du projet
 - [ ] Présenter les défis rencontrés et les solutions apportées
 - [ ] Recueillir les retours
@@ -266,10 +265,10 @@ The MVP (Minimum Viable Product) represents the essential features that must be 
 
 ### 3.1 User Management
 - [x] **Sign up and login**: secure authentication
-- [ ] **User profile**: view and update personal information
+- [x] **User profile**: view and update personal information
 
 ### 3.2 Goals Management (CRUD)
-- [ ] Create a goal with:
+- [x] Create a goal with:
   - Title (**required**)
   - Description
   - Start date
@@ -277,30 +276,30 @@ The MVP (Minimum Viable Product) represents the essential features that must be 
   - Priority: `Low`, `Medium`, `High`
   - Status: `In Progress`, `Completed`, `Abandoned`
   - Category (e.g., Health, Career, Finance, Personal)
-- [ ] List goals:
+- [x] List goals:
   - View all goals
   - Filter by status and priority
   - Sort by due date
-- [ ] View a goal:
+- [x] View a goal:
   - Full details including progress
-- [ ] Update a goal:
+- [x] Update a goal:
   - Edit all fields
-- [ ] Mark as completed:
+- [x] Mark as completed:
   - Change status to `Completed`
-- [ ] Delete a goal
+- [x] Delete a goal
 
 ### 3.3 Goal Steps
-- [ ] Create steps to break down a goal:
+- [x] Create steps to break down a goal:
   - Step title
   - Due date (optional)
   - Status: `To Do`, `Completed`
-- [ ] Mark a step as completed
-- [ ] Compute progress:
+- [x] Mark a step as completed
+- [x] Compute progress:
   - percentage based on completed steps
-- [ ] Update / delete steps
+- [x] Update / delete steps
 
 ### 3.4 Habits Management (CRUD)
-- [ ] Create a habit with:
+- [x] Create a habit with:
   - Name (**required**)
   - Description
   - Frequency:
@@ -308,36 +307,36 @@ The MVP (Minimum Viable Product) represents the essential features that must be 
     - Weekly (X times per week)
   - Category
   - Start date
-- [ ] List habits:
+- [x] List habits:
   - view all active habits
-- [ ] Update a habit
-- [ ] Archive a habit:
+- [x] Update a habit
+- [x] Archive a habit:
   - pause or stop
 
 ### 3.5 Habit Tracking
-- [ ] Daily/weekly tracking:
+- [x] Daily/weekly tracking:
   - calendar or grid view to mark days
   - `check` button to mark a habit as completed for today
   - visual history of completed days
-- [ ] Streak calculation (consecutive completion):
+- [x] Streak calculation (consecutive completion):
   - current streak
   - best streak
-- [ ] Completion rate:
+- [x] Completion rate:
   - percentage of completed days over a given period
 
 ### 3.6 Dashboard
-- [ ] Overview of goals in progress
-- [ ] Overview of today’s habits
-- [ ] Basic stats:
+- [x] Overview of goals in progress
+- [x] Overview of today’s habits
+- [x] Basic stats:
   - number of completed goals
   - longest streak
   - habits completed today
 
 ### 3.7 User Interface
-- [ ] Responsive UI (mobile, tablet, desktop)
-- [ ] Clear navigation between goals and habits
-- [ ] Visual feedback for completions (animations, colors)
-- [ ] Motivational messages
+- [x] Responsive UI (mobile, tablet, desktop)
+- [x] Clear navigation between goals and habits
+- [x] Visual feedback for completions (animations, colors)
+- [x] Motivational messages
 
 
 ## 4) Technology Stack (Full)
@@ -407,14 +406,39 @@ All `.env` are in the different files, we have to use .env.exemple as .env:
 
 
 ### 5.3 Run with Docker (recommended)
-Commands (to finalize once `docker-compose.yml` is in place):
 
-- Start:
-  - `docker compose up --build`
-- Stop:
-  - `docker compose down`
-- Reset DB (deletes data):
-  - `docker compose down -v`
+#### Start all services (backend + frontend + database + documentation)
+```bash
+docker compose up --build
+```
+
+Services will be available at:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:8080
+- **Documentation**: http://localhost:8001
+- **Database**: localhost:5432
+
+#### Stop all services
+```bash
+docker compose down
+```
+
+#### Reset database (deletes data)
+```bash
+docker compose down -v
+```
+
+#### Start individual services
+```bash
+# Only documentation
+docker compose up goals-tracker-docs
+
+# Only backend
+docker compose up goals-tracker-backend
+
+# Only frontend
+docker compose up goals-tracker-front
+```
 
 ### 5.4 Run locally (without Docker)
 #### Backend
@@ -429,10 +453,36 @@ Commands (to finalize once `docker-compose.yml` is in place):
 - Start dev server:
   - `npm run dev`
 
-### 5.5 Documentation (MkDocs)
-- Go to `docs/`
-- Install MkDocs (method to define)
-- Serve locally:
-  - `mkdocs serve`
-- Build static docs:
-  - `mkdocs build`
+### 5.5 Documentation
+
+The project includes comprehensive documentation built with MkDocs.
+
+#### View documentation (Docker - Recommended)
+```bash
+# Start documentation service
+docker compose up goals-tracker-docs
+
+# Access at: http://localhost:8001
+```
+
+#### View documentation (Local development)
+```bash
+cd docs/goal-tracker
+
+# Install dependencies
+pip install mkdocs mkdocs-material
+
+# Serve with live reload
+mkdocs serve
+
+# Access at: http://localhost:8000
+```
+
+The documentation includes:
+- 📚 Complete installation guide
+- 🏗️ Architecture overview (backend, frontend, database)
+- 🐳 Docker setup and deployment
+- 🔄 CI/CD pipeline documentation
+- 📡 API reference
+
+For more details, see [docs/goal-tracker/README.md](docs/goal-tracker/README.md)

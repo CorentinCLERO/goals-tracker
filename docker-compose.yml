@@ -35,5 +35,12 @@ services:
     depends_on:
       - goals-tracker-backend
 
+  goals-tracker-docs:
+    build:
+      context: ./docs/goal-tracker
+    restart: always
+    ports:
+      - "8001:80"
+
 volumes:
   pgdata:
