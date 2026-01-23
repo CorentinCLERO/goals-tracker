@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: goals_tracker_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  goals-tracker-backend:
+    build:
+      context: ./goals-tracker-back
+    restart: always
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: user
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: goals_tracker_db
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  goals-tracker-front:
+    build:
+      context: ./goals-tracker-front
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - goals-tracker-backend
+
+volumes:
+  pgdata:
