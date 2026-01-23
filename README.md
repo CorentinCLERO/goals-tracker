@@ -407,14 +407,39 @@ All `.env` are in the different files, we have to use .env.exemple as .env:
 
 
 ### 5.3 Run with Docker (recommended)
-Commands (to finalize once `docker-compose.yml` is in place):
 
-- Start:
-  - `docker compose up --build`
-- Stop:
-  - `docker compose down`
-- Reset DB (deletes data):
-  - `docker compose down -v`
+#### Start all services (backend + frontend + database + documentation)
+```bash
+docker compose up --build
+```
+
+Services will be available at:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:8080
+- **Documentation**: http://localhost:8001
+- **Database**: localhost:5432
+
+#### Stop all services
+```bash
+docker compose down
+```
+
+#### Reset database (deletes data)
+```bash
+docker compose down -v
+```
+
+#### Start individual services
+```bash
+# Only documentation
+docker compose up goals-tracker-docs
+
+# Only backend
+docker compose up goals-tracker-backend
+
+# Only frontend
+docker compose up goals-tracker-front
+```
 
 ### 5.4 Run locally (without Docker)
 #### Backend
@@ -429,10 +454,36 @@ Commands (to finalize once `docker-compose.yml` is in place):
 - Start dev server:
   - `npm run dev`
 
-### 5.5 Documentation (MkDocs)
-- Go to `docs/`
-- Install MkDocs (method to define)
-- Serve locally:
-  - `mkdocs serve`
-- Build static docs:
-  - `mkdocs build`
+### 5.5 Documentation
+
+The project includes comprehensive documentation built with MkDocs.
+
+#### View documentation (Docker - Recommended)
+```bash
+# Start documentation service
+docker compose up goals-tracker-docs
+
+# Access at: http://localhost:8001
+```
+
+#### View documentation (Local development)
+```bash
+cd docs/goal-tracker
+
+# Install dependencies
+pip install mkdocs mkdocs-material
+
+# Serve with live reload
+mkdocs serve
+
+# Access at: http://localhost:8000
+```
+
+The documentation includes:
+- 📚 Complete installation guide
+- 🏗️ Architecture overview (backend, frontend, database)
+- 🐳 Docker setup and deployment
+- 🔄 CI/CD pipeline documentation
+- 📡 API reference
+
+For more details, see [docs/goal-tracker/README.md](docs/goal-tracker/README.md)

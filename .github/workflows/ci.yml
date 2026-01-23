@@ -51,13 +51,13 @@ jobs:
           ./mvnw -B test
 
   build-and-push:
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
     environment: githubaction
     strategy:
       matrix:
-        service: [back, front]
+        service: [back, front, docs]
         include:
           - service: back
             build_path: goals-tracker-back
@@ -66,6 +66,10 @@ jobs:
           - service: front
             build_path: goals-tracker-front
             image_name: goals-tracker-front
+            dockerfile: Dockerfile
+          - service: docs
+            build_path: docs/goal-tracker
+            image_name: goals-tracker-docs
             dockerfile: Dockerfile
 
     steps:
