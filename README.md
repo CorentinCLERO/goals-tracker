@@ -2,7 +2,7 @@
 ###### Render
 [![Website shields.io](https://img.shields.io/website-up-down-green-red/http/shields.io.svg)](https://goals-tracker-xtkv.onrender.com)
 ###### GCP
-[![Website shields.io](https://img.shields.io/website-up-down-green-red/http/shields.io.svg)](https://goals-tracker-xtkv.onrender.com)
+[![Website shields.io](https://img.shields.io/website-up-down-green-red/http/shields.io.svg)](goals-tracker-front-780131803540.europe-west1.run.app)
 ###### Doc
 [![Website shields.io]( https://img.shields.io/badge/documentation-up-blue)](http://goals-tracker-docs-780131803540.europe-west1.run.app/)
 
