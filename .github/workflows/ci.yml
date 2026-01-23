@@ -51,7 +51,7 @@ jobs:
           ./mvnw -B test
 
   build-and-push:
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
     environment: githubaction
