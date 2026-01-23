@@ -1,25 +1,26 @@
 package com.example.goals_tracker.service;
 
-import com.example.goals_tracker.dto.BadgeData;
-import com.example.goals_tracker.model.Badge;
-import com.example.goals_tracker.model.User;
-import com.example.goals_tracker.model.UserBadge;
-import com.example.goals_tracker.repository.BadgeRepository;
-import com.example.goals_tracker.repository.GoalRepository;
-import com.example.goals_tracker.repository.HabitRepository;
-import com.example.goals_tracker.repository.HabitLogRepository;
-import com.example.goals_tracker.repository.UserBadgeRepository;
-import com.example.goals_tracker.repository.UserRepository;
-import com.example.goals_tracker.model.StatusEnum;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.goals_tracker.dto.BadgeData;
+import com.example.goals_tracker.model.Badge;
+import com.example.goals_tracker.model.StatusEnum;
+import com.example.goals_tracker.model.UserBadge;
+import com.example.goals_tracker.repository.BadgeRepository;
+import com.example.goals_tracker.repository.GoalRepository;
+import com.example.goals_tracker.repository.HabitLogRepository;
+import com.example.goals_tracker.repository.HabitRepository;
+import com.example.goals_tracker.repository.UserBadgeRepository;
+import com.example.goals_tracker.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -82,7 +83,6 @@ public class BadgeService {
         // Check if user has any habit with 30-day streak
         boolean has30DayStreak = habitRepository.findAllByUserId(userId).stream()
             .anyMatch(habit -> calculateHabitStreak(habit.getId()) >= 30);
-            
         if (has30DayStreak) {
             awardBadge(userId, commitmentBadge.getId());
         }

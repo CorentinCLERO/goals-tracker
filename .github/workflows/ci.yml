@@ -51,7 +51,7 @@ jobs:
           ./mvnw -B test
 
   build-and-push:
-    #if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
     environment: githubaction
@@ -103,6 +103,3 @@ jobs:
               -H "Authorization: Bearer ${RENDER_API_TOKEN}" \
               -H "Accept: application/json"
           echo "Triggering worker deploy..."
-          curl -X POST "https://api.render.com/v1/services/${RENDER_SERVICE_ID_WORKER}/deploys" \
-              -H "Authorization: Bearer ${RENDER_API_TOKEN}" \
-              -H "Accept: application/json"
